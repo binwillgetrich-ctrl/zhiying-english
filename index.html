@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="职英英语">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='22' fill='%231a73e8'/%3E%3Ctext x='48' y='64' font-size='46' text-anchor='middle' fill='%23ffffff' font-family='sans-serif'%3E职%3C/text%3E%3C/svg%3E">
+<title>职英 · 每日英语</title>
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Roboto:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+<style>
+/* ============================================================
+   设计基调：Google 式简洁浅色风
+   ============================================================ */
+:root{
+  --primary:#1a73e8;
+  --primary-hover:#1765cc;
+  --primary-soft:#e8f0fe;
+  --bg:#f8f9fa;
+  --surface:#ffffff;
+  --text:#202124;
+  --text2:#5f6368;
+  --text3:#80868b;
+  --line:#dadce0;
+  --green:#188038;
+  --green-soft:#e6f4ea;
+  --amber:#f9ab00;
+  --amber-soft:#fef7e0;
+  --red:#d93025;
+  --red-soft:#fce8e6;
+  --radius:16px;
+  --radius-sm:12px;
+  --shadow:0 1px 3px rgba(60,64,67,.12),0 1px 2px rgba(60,64,67,.08);
+  --shadow-lg:0 4px 16px rgba(60,64,67,.16);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Roboto','Noto Sans SC',-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+#app{max-width:640px;margin:0 auto;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font-family:inherit;font-size:16px;color:var(--text)}
+h1,h2,h3,h4{margin:0;font-weight:500}
+a{color:var(--primary);text-decoration:none}
+
+/* ---- 顶部栏 ---- */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;gap:8px;
+  padding:12px 16px;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+}
+.topbar .brand{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;letter-spacing:.2px}
+.topbar .brand .logo{
+  width:30px;height:30px;border-radius:8px;background:var(--primary);
+  color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.topbar .sub{font-size:12px;color:var(--text3);margin-top:1px}
+
+/* ---- 视图容器 ---- */
+.view{display:none;padding:16px 16px 110px}
+.view.active{display:block;animation:fadeIn .22s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ---- 底部导航 ---- */
+.bottom-nav{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:60;
+  width:100%;max-width:640px;background:var(--surface);
+  border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 0 10px;color:var(--text3);font-size:11px;font-weight:500;
+  transition:color .15s;
+}
+.nav-item svg{width:22px;height:22px}
+.nav-item.on{color:var(--primary)}
+
+/* ---- 卡片 ---- */
+.card{
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);
+}
+.card + .card{margin-top:14px}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 10px}
+.section-title h2{font-size:16px;font-weight:700}
+.section-title .more{font-size:13px;color:var(--primary);font-weight:500}
+
+/* ---- 按钮 ---- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  border-radius:999px;padding:10px 18px;font-size:14px;font-weight:500;
+  transition:background .15s,box-shadow .15s;user-select:none;
+}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-hover);box-shadow:var(--shadow)}
+.btn-tonal{background:var(--primary-soft);color:var(--primary)}
+.btn-tonal:hover{background:#d8e6fc}
+.btn-outline{border:1px solid var(--line);color:var(--primary);background:#fff}
+.btn-outline:hover{background:var(--primary-soft)}
+.btn-block{width:100%}
+.btn-icon{width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--primary)}
+.btn-icon:hover{background:var(--primary-soft)}
+.btn-icon svg{width:22px;height:22px}
+.btn-sm{padding:7px 14px;font-size:13px}
+
+/* ---- 芯片 / 标签 ---- */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:500;
+  background:var(--surface);border:1px solid var(--line);color:var(--text2);white-space:nowrap;
+}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* ---- 熟练度圆点 ---- */
+.dots{display:inline-flex;gap:3px;align-items:center}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.dots i.f{background:var(--primary)}
+.dots i.m{background:var(--green)}
+
+/* ---- 首页 ---- */
+.greeting{font-size:22px;font-weight:700;margin:4px 2px 2px}
+.greeting-sub{font-size:13px;color:var(--text2);margin-bottom:16px}
+.checkin-hero{
+  background:linear-gradient(135deg,#1a73e8,#4285f4);color:#fff;
+  border-radius:var(--radius);padding:20px;display:flex;align-items:center;gap:16px;
+  box-shadow:var(--shadow-lg);position:relative;overflow:hidden;
+}
+.checkin-hero .txt{flex:1}
+.checkin-hero .big{font-size:28px;font-weight:700;line-height:1.2}
+.checkin-hero .small{font-size:13px;opacity:.92;margin-top:2px}
+.checkin-hero .btn{background:#fff;color:var(--primary);font-weight:700}
+.quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.quick-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;
+  box-shadow:var(--shadow);color:var(--text);
+}
+.quick-card .num{font-size:20px;font-weight:700;color:var(--primary)}
+.quick-card .lbl{font-size:12px;color:var(--text2)}
+.stat-row{display:flex;gap:10px;margin-top:14px}
+.stat-pill{
+  flex:1;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:12px;text-align:center;box-shadow:var(--shadow);
+}
+.stat-pill .v{font-size:20px;font-weight:700}
+.stat-pill .l{font-size:12px;color:var(--text2)}
+.phrase-of-day{display:flex;align-items:center;gap:12px}
+.phrase-of-day .en{font-size:17px;font-weight:700}
+.phrase-of-day .cn{font-size:13px;color:var(--text2);margin-top:2px}
+
+/* ---- 闪卡 ---- */
+.flash-wrap{display:flex;flex-direction:column;align-items:center}
+.flash-progress{width:100%;height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:16px}
+.flash-progress i{display:block;height:100%;background:var(--primary);border-radius:4px;transition:width .2s}
+.flash-count{font-size:13px;color:var(--text2);margin-bottom:12px}
+.flash-card{
+  width:100%;max-width:360px;height:340px;perspective:1200px;cursor:pointer;user-select:none;
+}
+.flash-inner{
+  position:relative;width:100%;height:100%;transform-style:preserve-3d;
+  transition:transform .5s cubic-bezier(.4,.2,.2,1);
+}
+.flash-card.flipped .flash-inner{transform:rotateY(180deg)}
+.flash-face{
+  position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  background:var(--surface);border:1px solid var(--line);border-radius:20px;
+  box-shadow:var(--shadow-lg);display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;text-align:center;
+}
+.flash-face.back{transform:rotateY(180deg);background:var(--primary-soft)}
+.flash-face .term{font-size:32px;font-weight:700;letter-spacing:.3px}
+.flash-face .phon{font-size:16px;color:var(--text2);margin-top:8px}
+.flash-face .flip-hint{position:absolute;bottom:14px;font-size:12px;color:var(--text3)}
+.flash-face .meaning{font-size:20px;font-weight:500;margin-top:8px}
+.flash-face .example{font-size:14px;color:var(--text2);margin-top:14px;line-height:1.6}
+.flash-face .category{position:absolute;top:16px;font-size:12px;color:var(--text3);background:var(--bg);padding:4px 10px;border-radius:999px}
+.flash-actions{display:flex;gap:8px;width:100%;max-width:360px;margin-top:18px;flex-wrap:wrap;justify-content:center}
+.flash-actions .btn{flex:1;min-width:74px;padding:10px 6px;font-size:13px}
+.btn-again{background:var(--red-soft);color:var(--red)}
+.btn-hard{background:var(--amber-soft);color:#b06000}
+.btn-good{background:var(--primary-soft);color:var(--primary)}
+.btn-easy{background:var(--green-soft);color:var(--green)}
+.flash-summary{text-align:center;padding:24px 0}
+.flash-summary h3{font-size:22px;font-weight:700;margin-bottom:8px}
+.flash-summary .note{font-size:14px;color:var(--text2);margin-bottom:20px}
+
+/* ---- 词库 ---- */
+.searchbar{
+  display:flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px solid var(--line);border-radius:999px;padding:10px 14px;
+}
+.searchbar svg{width:18px;height:18px;color:var(--text3);flex:none}
+.searchbar input{border:none;outline:none;flex:1;background:transparent}
+.word-row{
+  display:flex;align-items:center;gap:10px;padding:13px 4px;
+  border-bottom:1px solid var(--line);cursor:pointer;
+}
+.word-row:last-child{border-bottom:none}
+.word-row .w-main{flex:1;min-width:0}
+.word-row .term{font-size:15px;font-weight:700}
+.word-row .phon{font-size:12px;color:var(--text3);margin-left:6px}
+.word-row .mean{font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.word-row .cat{font-size:11px;color:var(--primary);background:var(--primary-soft);padding:2px 8px;border-radius:999px;flex:none}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3)}
+.empty-state .t{font-size:15px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.empty-state .s{font-size:13px;line-height:1.6}
+
+/* ---- 口语 ---- */
+.phrase-card .p-top{display:flex;align-items:flex-start;gap:12px}
+.phrase-card .p-en{font-size:17px;font-weight:700;line-height:1.4;flex:1}
+.phrase-card .p-cn{font-size:14px;color:var(--text2);margin-top:4px}
+.phrase-card .p-ex{
+  font-size:13px;color:var(--text2);background:var(--bg);
+  border-radius:var(--radius-sm);padding:10px 12px;margin-top:12px;line-height:1.6;
+}
+.prof-row{display:flex;gap:6px;margin-top:12px}
+.prof-seg{
+  flex:1;text-align:center;font-size:12px;font-weight:500;padding:7px 0;
+  border-radius:999px;border:1px solid var(--line);color:var(--text2);background:#fff;
+}
+.prof-seg.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.ai-card{
+  border:1px dashed var(--primary);background:var(--primary-soft);
+  border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:14px;
+}
+.ai-card .ic{width:44px;height:44px;border-radius:12px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.ai-card .ic svg{width:24px;height:24px}
+.ai-card .t{font-size:15px;font-weight:700}
+.ai-card .s{font-size:13px;color:var(--text2);margin-top:2px}
+.tag{font-size:11px;font-weight:700;color:var(--primary);background:#fff;border:1px solid var(--primary);padding:1px 8px;border-radius:999px;margin-left:6px}
+
+/* ---- 语法 ---- */
+.gram-card .g-t{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.gram-card .g-cat{font-size:11px;color:var(--text2);background:var(--bg);padding:2px 8px;border-radius:999px}
+.gram-card .g-d{font-size:14px;color:var(--text2);line-height:1.7;margin-top:8px}
+.gram-card .g-ex{font-size:13px;color:var(--text);background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;margin-top:10px;line-height:1.7}
+.quiz-box{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.quiz-box .q{font-size:14px;font-weight:500;margin-bottom:10px}
+.opt{
+  display:block;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line);
+  border-radius:var(--radius-sm);font-size:14px;margin-bottom:8px;background:#fff;color:var(--text);
+}
+.opt:hover{background:var(--bg)}
+.opt.correct{border-color:var(--green);background:var(--green-soft);color:var(--green);font-weight:500}
+.opt.wrong{border-color:var(--red);background:var(--red-soft);color:var(--red)}
+.quiz-feedback{font-size:13px;margin-top:8px}
+.quiz-feedback.ok{color:var(--green)}
+.quiz-feedback.no{color:var(--red)}
+
+/* ---- 统计 ---- */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-head .ym{font-size:15px;font-weight:700}
+.cal-btn{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text2)}
+.cal-btn:hover{background:var(--bg)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-grid .wd{text-align:center;font-size:11px;color:var(--text3);padding:2px 0}
+.cal-cell{
+  aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--text2);position:relative;
+}
+.cal-cell.done{background:var(--primary);color:#fff;font-weight:500}
+.cal-cell.today{border:2px solid var(--primary);color:var(--primary);font-weight:700}
+.cal-cell.done.today{border-color:#fff}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.bar-row .bl{width:52px;font-size:12px;color:var(--text2);text-align:right}
+.bar-row .bt{flex:1;height:10px;background:var(--bg);border-radius:6px;overflow:hidden}
+.bar-row .bt i{display:block;height:100%;background:var(--primary);border-radius:6px}
+.bar-row .bn{width:26px;font-size:12px;font-weight:500}
+.week-bars{display:flex;align-items:flex-end;gap:8px;height:90px;padding-top:6px}
+.week-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.week-bar .col{width:100%;max-width:26px;background:var(--primary);border-radius:6px 6px 2px 2px;min-height:3px}
+.week-bar .lb{font-size:11px;color:var(--text3)}
+.week-bar .val{font-size:10px;color:var(--text2)}
+
+/* ---- AI 占位 ---- */
+.ai-hero{text-align:center;padding:40px 20px 20px}
+.ai-hero .orb{
+  width:96px;height:96px;border-radius:50%;margin:0 auto 20px;
+  background:radial-gradient(circle at 32% 28%,#8ab4f8,#1a73e8);
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  box-shadow:0 8px 30px rgba(26,115,232,.35);
+}
+.ai-hero .orb svg{width:48px;height:48px}
+.ai-hero h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.ai-hero p{font-size:14px;color:var(--text2);line-height:1.7;max-width:340px;margin:0 auto}
+.plan-list{margin-top:24px;text-align:left}
+.plan-step{display:flex;gap:12px;align-items:flex-start;padding:10px 0}
+.plan-step .n{
+  width:26px;height:26px;border-radius:50%;background:var(--primary-soft);color:var(--primary);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none;
+}
+.plan-step .b{font-size:14px;font-weight:500}
+.plan-step .s{font-size:13px;color:var(--text2);margin-top:2px}
+
+/* ---- 弹窗 ---- */
+.modal-mask{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.modal{
+  background:var(--surface);width:100%;max-width:640px;border-radius:20px 20px 0 0;
+  padding:18px 20px 28px;max-height:88vh;overflow-y:auto;animation:slideUp .25s ease;
+}
+@keyframes slideUp{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.modal-head h3{font-size:18px;font-weight:700}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px}
+.field input,.field textarea,.field select{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);
+  outline:none;background:#fff;
+}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-soft)}
+.field textarea{resize:vertical;min-height:76px}
+.import-hint{font-size:12px;color:var(--text3);line-height:1.6;background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:14px}
+.hidden-file{display:none}
+
+/* ---- toast ---- */
+.toast{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:99;
+  background:#323232;color:#fff;font-size:14px;padding:11px 18px;border-radius:999px;
+  box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:opacity .25s;max-width:88vw;text-align:center;
+}
+.toast.show{opacity:1}
+
+/* ---- 通用小工具 ---- */
+.flex{display:flex;align-items:center}
+.between{justify-content:space-between}
+.gap8{gap:8px}
+.mt12{margin-top:12px}
+.mt16{margin-top:16px}
+.actions-bar{display:flex;gap:10px;margin-top:14px}
+.actions-bar .btn{flex:1}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 顶部栏 -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">职</span>
+      <span>
+        <div>职英 · 每日英语</div>
+        <div class="sub" id="top-sub">职场英语学习</div>
+      </span>
+    </div>
+    <div id="top-actions"></div>
+  </header>
+
+  <main id="main">
+
+    <!-- 首页 -->
+    <section class="view" data-route="home"></section>
+
+    <!-- 闪卡 -->
+    <section class="view" data-route="flashcards"></section>
+
+    <!-- 词库 -->
+    <section class="view" data-route="words"></section>
+
+    <!-- 口语 -->
+    <section class="view" data-route="speaking"></section>
+
+    <!-- 语法 -->
+    <section class="view" data-route="grammar"></section>
+
+    <!-- 统计 -->
+    <section class="view" data-route="stats"></section>
+
+    <!-- AI 对话（占位） -->
+    <section class="view" data-route="ai"></section>
+
+  </main>
+
+  <!-- 底部导航 -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="nav-item" data-route="home"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>今日</button>
+    <button class="nav-item" data-route="flashcards"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5v14c0 1.1.9 2 2 2h6V3H5c-1.1 0-2 .9-2 2zm6 14H5V5h4v14zm3-14v14h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-6zm5 12h-3V7h3v10z"/></svg>闪卡</button>
+    <button class="nav-item" data-route="speaking"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>口语</button>
+    <button class="nav-item" data-route="grammar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>语法</button>
+    <button class="nav-item" data-route="stats"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4zm2 2H5V5h14v14z"/></svg>统计</button>
+  </nav>
+
+</div>
+
+<!-- 弹窗容器 -->
+<div id="modal-root"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ============================================================
+   图标库（内联 SVG）
+   ============================================================ */
+const IC = {
+  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>',
+  import:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>',
+  close:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>',
+  chat:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>',
+  checkCircle:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>'
+};
+
+/* ============================================================
+   内置内容：职场词库
+   ============================================================ */
+const CATS = [
+  {key:'greet', name:'日常寒暄'},
+  {key:'daily', name:'职场日常'},
+  {key:'meet',  name:'会议沟通'},
+  {key:'email', name:'邮件表达'},
+  {key:'social',name:'商务社交'},
+  {key:'mood',  name:'状态情绪'}
+];
+
+const BUILTIN_WORDS = [
+  // 日常寒暄
+  ['catch up','kætʃ ʌp','叙旧，聊聊近况','Let\'s catch up over coffee sometime.','greet'],
+  ['weekend','ˌwiːkˈend','周末','Any plans for the weekend?','greet'],
+  ['traffic','ˈtræfɪk','交通','The traffic was heavy this morning.','greet'],
+  ['weather','ˈweðər','天气','The weather is finally getting cooler.','greet'],
+  ['lunch','lʌntʃ','午餐','Let\'s grab lunch together.','greet'],
+  ['break','breɪk','休息','Let\'s take a short break.','greet'],
+  ['tired','ˈtaɪərd','疲惫的','I feel a bit tired today.','greet'],
+  ['mood','muːd','心情','I\'m in a great mood today.','greet'],
+  ['plan','plæn','计划','What\'s your plan for this afternoon?','greet'],
+  ['schedule','ˈskedʒuːl','日程表','Let me check my schedule.','greet'],
+  ['busy','ˈbɪzi','忙碌的','I\'ve been busy all week.','greet'],
+  ['free','friː','有空的','Are you free after three?','greet'],
+  ['appointment','əˈpɔɪntmənt','约见，约定','I have an appointment at noon.','greet'],
+  ['holiday','ˈhɑːlədeɪ','假期','We have a holiday next week.','greet'],
+  ['favorite','ˈfeɪvərɪt','最喜欢的','This is my favorite coffee shop.','greet'],
+  ['relax','rɪˈlæks','放松','I just want to relax this weekend.','greet'],
+  ['movie','ˈmuːvi','电影','Have you seen that new movie?','greet'],
+  ['hobby','ˈhɑːbi','爱好','What\'s your hobby?','greet'],
+  // 职场日常
+  ['deadline','ˈdedlaɪn','截止日期','The deadline is this Friday.','daily'],
+  ['task','tæsk','任务','I have a lot of tasks today.','daily'],
+  ['project','ˈprɑːdʒekt','项目','We\'re working on a new project.','daily'],
+  ['report','rɪˈpɔːrt','报告','I need to finish this report.','daily'],
+  ['meeting','ˈmiːtɪŋ','会议','There\'s a meeting at ten.','daily'],
+  ['email','ˈiːmeɪl','邮件','I\'ll send you an email.','daily'],
+  ['document','ˈdɑːkjumənt','文档','Please check the document.','daily'],
+  ['colleague','ˈkɑːliːɡ','同事','My colleague helped me with this.','daily'],
+  ['manager','ˈmænɪdʒər','经理','I\'ll ask my manager first.','daily'],
+  ['client','ˈklaɪənt','客户','The client wants a quick call.','daily'],
+  ['office','ˈɔːfɪs','办公室','I\'ll be in the office tomorrow.','daily'],
+  ['computer','kəmˈpjuːtər','电脑','My computer is slow today.','daily'],
+  ['data','ˈdeɪtə','数据','We need more data to decide.','daily'],
+  ['budget','ˈbʌdʒɪt','预算','The budget is limited.','daily'],
+  ['progress','ˈprɑːɡres','进展','We\'ve made good progress.','daily'],
+  ['discuss','dɪˈskʌs','讨论','Let\'s discuss this later.','daily'],
+  ['decide','dɪˈsaɪd','决定','We need to decide today.','daily'],
+  ['confirm','kənˈfɜːrm','确认','Please confirm the time.','daily'],
+  ['arrange','əˈreɪndʒ','安排','I\'ll arrange the meeting.','daily'],
+  ['finish','ˈfɪnɪʃ','完成','I\'ll finish it by tomorrow.','daily'],
+  // 会议沟通
+  ['agenda','əˈdʒendə','议程','Let\'s review the agenda.','meet'],
+  ['opinion','əˈpɪnjən','意见','What\'s your opinion?','meet'],
+  ['suggest','səˈdʒest','建议','I suggest we start early.','meet'],
+  ['feedback','ˈfiːdbæk','反馈','Thanks for your feedback.','meet'],
+  ['summary','ˈsʌməri','总结','Here\'s a quick summary.','meet'],
+  ['decision','dɪˈsɪʒn','决定','We reached a decision.','meet'],
+  ['attend','əˈtend','出席','Who will attend the meeting?','meet'],
+  ['postpone','poʊˈspoʊn','推迟','Let\'s postpone the meeting.','meet'],
+  ['cancel','ˈkænsl','取消','The meeting was cancelled.','meet'],
+  ['clarify','ˈklærəfaɪ','澄清','Let me clarify that.','meet'],
+  ['conclusion','kənˈkluːʒn','结论','What\'s the conclusion?','meet'],
+  ['brainstorm','ˈbreɪnstɔːrm','头脑风暴','Let\'s brainstorm some ideas.','meet'],
+  ['attendee','əˌtenˈdiː','参会者','All attendees have arrived.','meet'],
+  ['agreement','əˈɡriːmənt','一致，协议','We are in agreement on this.','meet'],
+  ['issue','ˈɪʃuː','问题，议题','Let\'s address this issue.','meet'],
+  ['solution','səˈluːʃn','解决方案','We need a better solution.','meet'],
+  ['detail','ˈdiːteɪl','细节','Let\'s go into more detail.','meet'],
+  ['priority','praɪˈɔːrəti','优先事项','This is our top priority.','meet'],
+  // 邮件表达
+  ['attach','əˈtætʃ','附上','I\'ve attached the file.','email'],
+  ['attachment','əˈtætʃmənt','附件','Please see the attachment.','email'],
+  ['forward','ˈfɔːrwərd','转发','I\'ll forward the email to you.','email'],
+  ['reply','rɪˈplaɪ','回复','I\'ll reply as soon as possible.','email'],
+  ['subject','ˈsʌbdʒɪkt','主题','What\'s the subject of the email?','email'],
+  ['recipient','rɪˈsɪpiənt','收件人','Add the recipient.','email'],
+  ['regarding','rɪˈɡɑːrdɪŋ','关于','Regarding your question...','email'],
+  ['inform','ɪnˈfɔːrm','通知','I\'d like to inform you that...','email'],
+  ['appreciate','əˈpriːʃieɪt','感激','I appreciate your help.','email'],
+  ['urgent','ˈɜːrdʒənt','紧急的','This is urgent.','email'],
+  ['update','ˌʌpˈdeɪt','更新','I\'ll update you soon.','email'],
+  ['remind','rɪˈmaɪnd','提醒','This is a reminder about...','email'],
+  ['enclosed','ɪnˈkloʊzd','随附的','Please find enclosed the form.','email'],
+  ['convenient','kənˈviːniənt','方便的','Let me know a convenient time.','email'],
+  ['milestone','ˈmaɪlstoʊn','里程碑，关键节点','We hit an important milestone this quarter.','email'],
+  ['inquire','ɪnˈkwaɪər','询问','I\'m writing to inquire about...','email'],
+  // 商务社交
+  ['introduce','ˌɪntrəˈduːs','介绍','Let me introduce myself.','social'],
+  ['business card','ˈbɪznəs kɑːrd','名片','Here\'s my business card.','social'],
+  ['networking','ˈnetwɜːrkɪŋ','社交，人脉','Networking is important.','social'],
+  ['partnership','ˈpɑːrtnərʃɪp','合作关系','We value the partnership.','social'],
+  ['cooperate','koʊˈɑːpəreɪt','合作','We\'d love to cooperate.','social'],
+  ['opportunity','ˌɑːpərˈtuːnəti','机会','This is a great opportunity.','social'],
+  ['welcome','ˈwelkəm','欢迎','Welcome to our office.','social'],
+  ['exchange','ɪksˈtʃeɪndʒ','交换','Let\'s exchange contact info.','social'],
+  ['toast','toʊst','祝酒','Let\'s make a toast.','social'],
+  ['honor','ˈɑːnər','荣幸','It\'s an honor to meet you.','social'],
+  ['pleasure','ˈpleʒər','愉快','It\'s a pleasure.','social'],
+  ['relationship','rɪˈleɪʃnʃɪp','关系','We have a good relationship.','social'],
+  ['proposal','prəˈpoʊzl','提案，建议','I\'ll send you the proposal.','social'],
+  ['negotiate','nɪˈɡoʊʃieɪt','谈判','We need to negotiate the price.','social'],
+  ['collaboration','kəˌlæbəˈreɪʃn','协作','It\'s a great collaboration.','social'],
+  // 状态情绪
+  ['excited','ɪkˈsaɪtɪd','兴奋的','I\'m excited about the new project.','mood'],
+  ['worried','ˈwɜːrid','担心的','I\'m worried about the deadline.','mood'],
+  ['confident','ˈkɑːnfɪdənt','自信的','I feel confident about the talk.','mood'],
+  ['stressed','strest','压力大的','I\'m a bit stressed this week.','mood'],
+  ['satisfied','ˈsætɪsfaɪd','满意的','I\'m satisfied with the result.','mood'],
+  ['frustrated','ˈfrʌstreɪtɪd','沮丧的','I felt frustrated by the delay.','mood'],
+  ['grateful','ˈɡreɪtfl','感激的','I\'m grateful for your support.','mood'],
+  ['positive','ˈpɑːzətɪv','积极的','Let\'s stay positive.','mood'],
+  ['negative','ˈneɡətɪv','消极的','Don\'t be so negative.','mood'],
+  ['nervous','ˈnɜːrvəs','紧张的','I was nervous before the speech.','mood'],
+  ['calm','kɑːm','冷静的','Stay calm and focused.','mood'],
+  ['proud','praʊd','自豪的','I\'m proud of our team.','mood'],
+  ['curious','ˈkjʊriəs','好奇的','I\'m curious about the feature.','mood'],
+  ['supportive','səˈpɔːrtɪv','支持的','My team is very supportive.','mood'],
+  ['helpful','ˈhelpfl','有帮助的','That was really helpful.','mood'],
+  ['motivated','ˈmoʊtɪveɪtɪd','有动力的','I feel motivated today.','mood']
+];
+
+/* ============================================================
+   内置内容：口语表达库（日常聊天优先）
+   ============================================================ */
+const SCENES = [
+  {key:'greet', name:'日常寒暄'},
+  {key:'smalltalk', name:'闲聊破冰'},
+  {key:'daily', name:'生活日常'},
+  {key:'chat',  name:'职场闲聊'},
+  {key:'work',  name:'职场沟通'},
+  {key:'meet',  name:'会议表达'},
+  {key:'email', name:'邮件用语'},
+  {key:'social',name:'社交用语'},
+  {key:'feel',  name:'观点情绪'},
+  {key:'phone', name:'电话沟通'},
+  {key:'dining',name:'餐饮出行'}
+];
+
+const P_BASE = [
+  // 日常寒暄
+  ['How\'s it going?','最近怎么样？','greet','A: How\'s it going?  B: Pretty good, thanks. And you?'],
+  ['Long time no see!','好久不见！','greet','Long time no see! How have you been?'],
+  ['Good to see you.','见到你很高兴。','greet','Good to see you. It\'s been a while.'],
+  ['What have you been up to?','你最近在忙什么？','greet','What have you been up to lately?'],
+  ['How was your weekend?','周末过得怎么样？','greet','How was your weekend? I went hiking.'],
+  ['It\'s been a while.','有一阵子没见了。','greet','It\'s been a while since we last met.'],
+  ['Can\'t complain.','还行，没什么可抱怨的。','greet','A: How are things?  B: Can\'t complain.'],
+  ['Just the usual.','还是老样子。','greet','A: Anything new?  B: Just the usual.'],
+  // 职场闲聊
+  ['Let\'s grab lunch sometime.','改天一起吃个午饭吧。','chat','We should grab lunch sometime this week.'],
+  ['I\'m just catching up on emails.','我正在处理邮件。','chat','Sorry, I\'m just catching up on emails.'],
+  ['Sounds like a plan.','听起来不错 / 就这么办。','chat','A: Let\'s meet at 3.  B: Sounds like a plan.'],
+  ['That makes sense.','说得通，有道理。','chat','Ah, that makes sense now.'],
+  ['I\'m all for it.','我完全赞成。','chat','I\'m all for starting earlier.'],
+  ['It\'s not a big deal.','没什么大不了的。','chat','Don\'t worry, it\'s not a big deal.'],
+  ['I\'m on the same page.','我和你想的一致。','chat','Glad we\'re on the same page.'],
+  ['Let me sleep on it.','让我考虑一下。','chat','Sounds good, let me sleep on it.'],
+  ['Give me a second.','稍等一下。','chat','Give me a second, I\'m on another call.'],
+  ['I\'m swamped today.','我今天忙得不可开交。','chat','Sorry for the delay, I\'m swamped today.'],
+  ['Beats me.','我也不知道 / 问倒我了。','chat','Beats me. You should ask the IT team.'],
+  ['Hang in there.','坚持住。','chat','I know it\'s tough, hang in there.'],
+  ['Let\'s play it by ear.','我们到时候看情况吧。','chat','Not sure yet, let\'s play it by ear.'],
+  ['It slipped my mind.','我一时忘了。','chat','Sorry, it completely slipped my mind.'],
+  // 会议表达
+  ['Let\'s get started.','我们开始吧。','meet','OK everyone, let\'s get started.'],
+  ['Could you elaborate on that?','你能详细说明一下吗？','meet','Could you elaborate on that point?'],
+  ['Let me play devil\'s advocate.','我来唱唱反调。','meet','Let me play devil\'s advocate for a second.'],
+  ['We\'re on track.','我们进展顺利。','meet','Good news: we\'re on track for the launch.'],
+  ['Let\'s circle back to that.','我们回头再谈这个。','meet','We\'re short on time, let\'s circle back to that.'],
+  ['Can we take this offline?','我们能会后单独聊吗？','meet','That\'s too detailed; can we take this offline?'],
+  ['Just to recap...','简单回顾一下……','meet','Just to recap, we agreed on three action items.'],
+  ['I\'d like to add something.','我想补充一点。','meet','If I may, I\'d like to add something.'],
+  ['Let\'s park that for now.','这个先放一放。','meet','Good idea, but let\'s park that for now.'],
+  ['Any other business?','还有其他事项吗？','meet','Before we wrap up, any other business?'],
+  ['Could you run that by me again?','你能再给我讲一遍吗？','meet','Sorry, could you run that by me again?'],
+  ['I see what you mean.','我明白你的意思。','meet','I see what you mean about the budget.'],
+  // 邮件用语
+  ['Hope this email finds you well.','希望你一切安好。','email','Hope this email finds you well.'],
+  ['I\'m writing to follow up on...','我写信是想跟进……','email','I\'m writing to follow up on our last meeting.'],
+  ['Please find attached...','请查收附件……','email','Please find attached the revised draft.'],
+  ['Could you kindly confirm...?','能否麻烦您确认……？','email','Could you kindly confirm the meeting time?'],
+  ['Looking forward to your reply.','期待您的回复。','email','Looking forward to your reply.'],
+  ['Let me know if you have any questions.','如有问题请随时告知。','email','Let me know if you have any questions.'],
+  ['Sorry for the late reply.','抱歉回复晚了。','email','Sorry for the late reply. I was on leave.'],
+  ['I\'ll get back to you by Friday.','我周五前回复你。','email','I\'ll get back to you by Friday.'],
+  ['For your reference.','供你参考。','email','I\'ve shared the file for your reference.'],
+  ['Please keep me posted.','请随时告知进展。','email','Keep me posted on the update.'],
+  ['I\'m writing to inquire about...','我写信是想询问……','email','I\'m writing to inquire about the quotation.'],
+  ['Thank you for your time.','感谢您的时间。','email','Thank you for your time and consideration.'],
+  // 社交用语
+  ['It\'s a pleasure to meet you.','很高兴认识您。','social','It\'s a pleasure to meet you, Mr. Chen.'],
+  ['Let me introduce you to...','让我介绍你认识……','social','Let me introduce you to our team lead.'],
+  ['May I have your business card?','能给我一张您的名片吗？','social','May I have your business card?'],
+  ['Let\'s stay in touch.','我们保持联系。','social','It was great talking, let\'s stay in touch.'],
+  ['Here\'s my contact info.','这是我的联系方式。','social','Here\'s my contact info, feel free to reach out.'],
+  ['I\'ll show you around.','我带你四处看看。','social','Welcome! I\'ll show you around the office.'],
+  ['Thank you for having me.','感谢您的邀请。','social','Thank you for having me today.'],
+  ['Let\'s catch up over coffee.','我们改天喝杯咖啡聊聊。','social','Let\'s catch up over coffee sometime.'],
+  ['It was nice talking to you.','和你聊天很愉快。','social','It was nice talking to you. See you around.'],
+  ['That was a great event.','活动办得真好。','social','That was a great event, well organized.'],
+  ['Pleased to make your acquaintance.','很高兴认识您（正式）。','social','Pleased to make your acquaintance.'],
+  ['I\'d like to propose a toast.','我想提议干一杯。','social','I\'d like to propose a toast to our partnership.']
+];
+
+const P_GREET = [
+  ['Hi, how are you?','你好，你好吗？','greet','Hi, how are you? — I\'m great, thanks.'],
+  ['How are you doing?','你最近怎么样？','greet','How are you doing these days?'],
+  ['How\'s everything?','一切都好吗？','greet','How\'s everything at work?'],
+  ['How\'s your day been?','你今天过得怎么样？','greet','How\'s your day been so far?'],
+  ['How\'s life treating you?','最近日子过得怎么样？','greet','Long time no see, how\'s life treating you?'],
+  ['What\'s up?','怎么啦 / 在忙什么？','greet','Hey, what\'s up?'],
+  ['What\'s new?','有什么新鲜事吗？','greet','What\'s new with you?'],
+  ['What\'s going on?','最近怎么样？','greet','So, what\'s going on lately?'],
+  ['Good morning!','早上好！','greet','Good morning, everyone!'],
+  ['Good afternoon!','下午好！','greet','Good afternoon, welcome back.'],
+  ['Good evening!','晚上好！','greet','Good evening, how was your day?'],
+  ['Nice to see you.','很高兴见到你。','greet','Nice to see you again.'],
+  ['Great to see you again.','很高兴又见到你。','greet','Great to see you again, it\'s been ages.'],
+  ['It\'s good to see you.','见到你真好。','greet','It\'s good to see you looking well.'],
+  ['Long time no see.','好久不见。','greet','Long time no see, where have you been?'],
+  ['How have you been?','你最近怎么样？','greet','How have you been since we last talked?'],
+  ['I\'ve been doing well.','我挺好的。','greet','I\'ve been doing well, thanks for asking.'],
+  ['Pretty good, thanks.','挺好的，谢谢。','greet','Pretty good, thanks. How about you?'],
+  ['Not too bad, thanks.','还不错，谢谢。','greet','Not too bad, thanks for asking.'],
+  ['Same as usual.','和往常一样。','greet','Same as usual, just working.'],
+  ['Just taking it easy.','就是放松放松。','greet','I\'m just taking it easy this weekend.'],
+  ['Keeping busy.','一直挺忙的。','greet','Keeping busy with a new project.'],
+  ['How was your day?','你今天过得如何？','greet','How was your day at the office?'],
+  ['How was your trip?','你旅行怎么样？','greet','How was your trip to Shanghai?'],
+  ['Did you sleep well?','你睡得好吗？','greet','Did you sleep well last night?'],
+  ['You look great today.','你今天看起来很棒。','greet','You look great today, is that a new haircut?'],
+  ['You look tired.','你看起来很累。','greet','You look tired, did you work late?'],
+  ['Is everything okay?','一切都还好吗？','greet','You seem quiet, is everything okay?'],
+  ['Glad to hear that.','很高兴听到这个。','greet','You got the job? Glad to hear that!'],
+  ['Sorry to hear that.','很遗憾听到这个。','greet','Sorry to hear that, hope it gets better.'],
+  ['Take care.','保重。','greet','Take care of yourself, see you soon.'],
+  ['See you later.','回头见。','greet','See you later, take care.'],
+  ['See you tomorrow.','明天见。','greet','See you tomorrow at the meeting.'],
+  ['Catch you later.','待会儿见。','greet','Catch you later, I\'m heading out.'],
+  ['Have a good one.','祝你过得愉快。','greet','Alright, have a good one!'],
+  ['Have a nice day.','祝你今天愉快。','greet','Thanks for your help, have a nice day.'],
+  ['Have a great weekend.','周末愉快。','greet','Have a great weekend, see you Monday.'],
+  ['Enjoy your day.','享受你的一天。','greet','Enjoy your day off!'],
+  ['Talk to you later.','回头再聊。','greet','Talk to you later, bye!'],
+  ['Say hi to everyone for me.','替我向大家问好。','greet','Say hi to everyone for me back home.'],
+  ['Give my regards to your family.','代我向你家人问好。','greet','Give my regards to your family.'],
+  ['It was great chatting with you.','和你聊天很开心。','greet','It was great chatting with you today.'],
+  ['Nice meeting you.','很高兴认识你。','greet','Nice meeting you, hope to see you again.'],
+  ['The pleasure is mine.','这是我的荣幸。','greet','The pleasure is mine, really.'],
+  ['Welcome back.','欢迎回来。','greet','Welcome back, we missed you.'],
+  ['Welcome home.','欢迎回家。','greet','Welcome home, how was the trip?'],
+  ['How do you do?','你好（正式初次见面）。','greet','How do you do? I\'m pleased to meet you.'],
+  ['How\'s your family?','你家人好吗？','greet','How\'s your family doing?'],
+  ['How\'s work going?','工作怎么样？','greet','How\'s work going these days?'],
+  ['How\'s the weather over there?','那边的天气怎么样？','greet','How\'s the weather over there today?']
+];
+
+const P_SMALLTALK = [
+  ['What do you do for a living?','你是做什么工作的？','smalltalk','What do you do for a living? I work in tech.'],
+  ['Where do you work?','你在哪里工作？','smalltalk','Where do you work now?'],
+  ['How long have you worked there?','你在那里工作多久了？','smalltalk','How long have you worked there?'],
+  ['Do you enjoy your job?','你喜欢你的工作吗？','smalltalk','Do you enjoy your job? I bet you do.'],
+  ['What are you working on these days?','你最近在做什么？','smalltalk','What are you working on these days?'],
+  ['Busy day?','今天忙吗？','smalltalk','Busy day? It\'s been non-stop for me.'],
+  ['How\'s the new job?','新工作怎么样？','smalltalk','How\'s the new job treating you?'],
+  ['What\'s keeping you busy?','最近在忙什么？','smalltalk','What\'s keeping you busy these days?'],
+  ['Any plans for the weekend?','周末有什么计划吗？','smalltalk','Any plans for the weekend?'],
+  ['Did you watch the game last night?','你昨晚看比赛了吗？','smalltalk','Did you watch the game last night?'],
+  ['Have you seen that new show?','你看过那个新剧吗？','smalltalk','Have you seen that new show everyone is talking about?'],
+  ['Do you have any hobbies?','你有什么爱好吗？','smalltalk','Do you have any hobbies besides work?'],
+  ['What do you like to do in your free time?','你空闲时间喜欢做什么？','smalltalk','What do you like to do in your free time?'],
+  ['I\'m into photography.','我喜欢摄影。','smalltalk','I\'m into photography and hiking.'],
+  ['That sounds interesting.','听起来很有意思。','smalltalk','You travel a lot? That sounds interesting.'],
+  ['Really? I had no idea.','真的吗？我完全不知道。','smalltalk','Really? I had no idea you played piano.'],
+  ['You\'re kidding!','你在开玩笑吧！','smalltalk','You\'re kidding! That\'s amazing news.'],
+  ['No way!','不会吧！','smalltalk','No way! You won the award?'],
+  ['Tell me more.','多说点。','smalltalk','That sounds cool, tell me more.'],
+  ['That\'s awesome.','太棒了。','smalltalk','You\'re going to Japan? That\'s awesome.'],
+  ['That\'s amazing.','太厉害了。','smalltalk','That\'s amazing, congrats!'],
+  ['I can\'t believe it.','我简直不敢相信。','smalltalk','I can\'t believe it, that\'s incredible.'],
+  ['What a coincidence!','真巧啊！','smalltalk','You\'re from the same city? What a coincidence!'],
+  ['Small world, isn\'t it?','世界真小，不是吗？','smalltalk','We went to the same school? Small world!'],
+  ['We should hang out sometime.','我们改天聚聚。','smalltalk','We should hang out sometime this month.'],
+  ['Let\'s grab a coffee sometime.','改天一起喝杯咖啡。','smalltalk','Let\'s grab a coffee sometime and chat.'],
+  ['Are you free this weekend?','你这个周末有空吗？','smalltalk','Are you free this weekend for dinner?'],
+  ['Do you want to join us?','你想加入我们吗？','smalltalk','We\'re going hiking, do you want to join us?'],
+  ['Count me in.','算我一个。','smalltalk','Sounds fun, count me in!'],
+  ['Sounds good to me.','我觉得不错。','smalltalk','Saturday works, sounds good to me.'],
+  ['I\'d love to, but...','我很想去，但是……','smalltalk','I\'d love to, but I have plans.'],
+  ['Maybe next time.','也许下次吧。','smalltalk','Can\'t make it today, maybe next time.'],
+  ['We\'ll figure it out.','我们会想办法的。','smalltalk','Don\'t worry, we\'ll figure it out.'],
+  ['It\'s up to you.','你来决定。','smalltalk','Where to eat? It\'s up to you.'],
+  ['Whatever works for you.','你怎么方便都行。','smalltalk','Any time works, whatever works for you.'],
+  ['I\'m easy.','我无所谓。','smalltalk','Either plan is fine, I\'m easy.'],
+  ['How do you like it here?','你觉得这里怎么样？','smalltalk','How do you like it here so far?'],
+  ['What do you think of this place?','你觉得这个地方怎么样？','smalltalk','What do you think of this place?'],
+  ['It\'s nice and quiet here.','这里很好，很安静。','smalltalk','It\'s nice and quiet here, perfect for work.'],
+  ['I love the atmosphere here.','我喜欢这里的氛围。','smalltalk','I love the atmosphere here, very relaxed.'],
+  ['Have you been here before?','你以前来过这里吗？','smalltalk','Have you been here before?'],
+  ['This is my first time here.','我是第一次来这里。','smalltalk','This is my first time here, it\'s great.'],
+  ['I\'m still getting used to it.','我还在适应中。','smalltalk','The new city is nice, I\'m still getting used to it.'],
+  ['It takes time to adjust.','适应需要时间。','smalltalk','Don\'t rush, it takes time to adjust.'],
+  ['We should do this more often.','我们应该多聚聚。','smalltalk','This was fun, we should do this more often.'],
+  ['Let\'s keep in touch.','我们保持联系。','smalltalk','Let\'s keep in touch after the event.'],
+  ['Don\'t be a stranger.','别不联系我。','smalltalk','Don\'t be a stranger, call me anytime.'],
+  ['I\'ll text you later.','我稍后给你发消息。','smalltalk','I\'ll text you later with the details.'],
+  ['Ping me when you\'re free.','你有空的时候联系我。','smalltalk','Ping me when you\'re free, let\'s chat.'],
+  ['Let\'s catch up another time.','我们改天再聊。','smalltalk','I have to run, let\'s catch up another time.']
+];
+
+const P_DAILY = [
+  ['I\'m running late.','我要迟到了。','daily','I\'m running late, please start without me.'],
+  ['I overslept this morning.','我今天早上睡过头了。','daily','I overslept this morning, sorry!'],
+  ['I\'m on my way.','我在路上了。','daily','I\'m on my way, be there soon.'],
+  ['I\'ll be there in ten minutes.','我十分钟后到。','daily','Traffic is light, I\'ll be there in ten minutes.'],
+  ['Traffic is terrible today.','今天交通很堵。','daily','Traffic is terrible today, I\'m stuck.'],
+  ['I got stuck in traffic.','我堵在路上了。','daily','Sorry, I got stuck in traffic.'],
+  ['What time do you get off work?','你几点下班？','daily','What time do you get off work today?'],
+  ['I usually get off at six.','我通常六点下班。','daily','I usually get off at six on weekdays.'],
+  ['Do you work overtime a lot?','你经常加班吗？','daily','Do you work overtime a lot in your job?'],
+  ['I have to work late tonight.','我今晚要加班。','daily','I have to work late tonight, don\'t wait for me.'],
+  ['I\'m taking the day off tomorrow.','我明天休假。','daily','I\'m taking the day off tomorrow to rest.'],
+  ['I need a day off.','我需要休息一天。','daily','I\'m exhausted, I need a day off.'],
+  ['Can I take a sick day?','我能请一天病假吗？','daily','I feel unwell, can I take a sick day?'],
+  ['I\'m feeling under the weather.','我感觉不太舒服。','daily','I\'m feeling under the weather today.'],
+  ['I think I\'m coming down with something.','我觉得我要生病了。','daily','I\'ve been sneezing, I think I\'m coming down with something.'],
+  ['Get some rest.','好好休息。','daily','You look pale, get some rest.'],
+  ['Drink plenty of water.','多喝水。','daily','Drink plenty of water and sleep early.'],
+  ['I hope you feel better soon.','希望你早日康复。','daily','I hope you feel better soon!'],
+  ['What\'s for dinner?','晚餐吃什么？','daily','What\'s for dinner tonight?'],
+  ['I\'ll cook tonight.','今晚我来做饭。','daily','Don\'t order out, I\'ll cook tonight.'],
+  ['Let\'s order takeout.','我们点外卖吧。','daily','Too tired to cook, let\'s order takeout.'],
+  ['I\'m starving.','我饿死了。','daily','I\'m starving, what do we have?'],
+  ['I\'m not hungry.','我不饿。','daily','I\'m not hungry, had a late lunch.'],
+  ['I\'m full.','我吃饱了。','daily','That was great, but I\'m full now.'],
+  ['It\'s delicious.','太好吃了。','daily','This dish is delicious, how did you make it?'],
+  ['Could you pass the salt?','能把盐递给我吗？','daily','Could you pass the salt, please?'],
+  ['I need to do the laundry.','我需要洗衣服。','daily','I need to do the laundry this weekend.'],
+  ['I\'m out of groceries.','我没吃的了。','daily','I\'m out of groceries, need to shop.'],
+  ['I need to go grocery shopping.','我需要去买菜。','daily','I need to go grocery shopping after work.'],
+  ['I\'ll do the dishes.','我来洗碗。','daily','You cooked, so I\'ll do the dishes.'],
+  ['The sink is clogged.','水槽堵了。','daily','The sink is clogged, can you fix it?'],
+  ['I need to fix the faucet.','我需要修一下水龙头。','daily','The faucet is dripping, I need to fix it.'],
+  ['Did you lock the door?','你锁门了吗？','daily','Did you lock the door before we left?'],
+  ['I forgot my keys.','我忘带钥匙了。','daily','I forgot my keys at home again.'],
+  ['I locked myself out.','我把钥匙锁在屋里了。','daily','I locked myself out, can I borrow yours?'],
+  ['What\'s the Wi-Fi password?','无线网密码是什么？','daily','What\'s the Wi-Fi password here?'],
+  ['The Wi-Fi is down.','网络断了。','daily','The Wi-Fi is down, I can\'t work.'],
+  ['My phone is dead.','我手机没电了。','daily','My phone is dead, can I charge it?'],
+  ['Do you have a charger?','你有充电器吗？','daily','Do you have a charger I could borrow?'],
+  ['I\'ll charge my phone.','我要给手机充电。','daily','Give me a minute, I\'ll charge my phone.'],
+  ['I should get some sleep.','我该睡觉了。','daily','It\'s late, I should get some sleep.'],
+  ['I\'m off to bed.','我去睡觉了。','daily','I\'m off to bed, good night.'],
+  ['Good night, sleep well.','晚安，睡个好觉。','daily','Good night, sleep well!'],
+  ['See you in the morning.','明天早上见。','daily','See you in the morning, have a good night.'],
+  ['I have a lot to do today.','我今天有很多事要做。','daily','I have a lot to do today, let\'s be efficient.'],
+  ['I\'ll make a to-do list.','我会列个待办清单。','daily','I\'ll make a to-do list to stay organized.'],
+  ['One thing at a time.','一件一件来。','daily','Don\'t stress, one thing at a time.'],
+  ['I\'ll deal with it later.','我稍后处理。','daily','It\'s not urgent, I\'ll deal with it later.'],
+  ['It can wait.','这个可以等等。','daily','Take a break, it can wait.'],
+  ['I need a moment to myself.','我需要自己待一会儿。','daily','Give me a second, I need a moment to myself.']
+];
+
+const P_WORK = [
+  ['Can I ask you a quick question?','我能问你个简单的问题吗？','work','Can I ask you a quick question about the report?'],
+  ['Do you have a minute?','你有空吗？','work','Do you have a minute to look at this?'],
+  ['I need your help with something.','我需要你帮忙处理点事。','work','I need your help with something urgent.'],
+  ['Could you help me out?','你能帮我一下吗？','work','Could you help me out with this task?'],
+  ['No problem.','没问题。','work','No problem, I can take care of it.'],
+  ['Sure, go ahead.','当然，请讲。','work','Sure, go ahead and tell me.'],
+  ['I\'m not sure about that.','那个我不太确定。','work','I\'m not sure about that, let me check.'],
+  ['Let me think about it.','让我想想。','work','Let me think about it and get back to you.'],
+  ['I\'ll look into it.','我会去查一下。','work','I\'ll look into it and report back.'],
+  ['I\'ll take care of it.','我会处理的。','work','Don\'t worry, I\'ll take care of it.'],
+  ['I\'ll handle it.','我来处理。','work','Leave it with me, I\'ll handle it.'],
+  ['It\'s under control.','一切都在掌控中。','work','Relax, it\'s under control.'],
+  ['Everything is on track.','一切都在按计划进行。','work','Everything is on track for the deadline.'],
+  ['We\'re running behind schedule.','我们进度落后了。','work','We\'re running behind schedule, we need to speed up.'],
+  ['We\'re ahead of schedule.','我们提前了。','work','Good news, we\'re ahead of schedule.'],
+  ['Let me get back to you.','我回头答复你。','work','Let me get back to you on that tomorrow.'],
+  ['I\'ll keep you posted.','我会随时告诉你进展。','work','I\'ll keep you posted on any changes.'],
+  ['Let\'s sync up later.','我们稍后对齐一下。','work','Let\'s sync up later this afternoon.'],
+  ['Can we have a quick chat?','我们能简单聊聊吗？','work','Can we have a quick chat about the plan?'],
+  ['Let\'s set up a meeting.','我们安排个会议吧。','work','Let\'s set up a meeting to discuss it.'],
+  ['I\'ve added it to the agenda.','我已把它加进议程。','work','I\'ve added it to the agenda for tomorrow.'],
+  ['Do you have the latest version?','你有最新版本吗？','work','Do you have the latest version of the file?'],
+  ['Could you double-check this?','你能再核对一下这个吗？','work','Could you double-check these numbers?'],
+  ['Please review it and let me know.','请审阅后告诉我。','work','Please review it and let me know your thoughts.'],
+  ['I\'ve attached the file.','我已经附上文件。','work','I\'ve attached the file for you.'],
+  ['Did you get my email?','你收到我的邮件了吗？','work','Did you get my email about the schedule?'],
+  ['I didn\'t see it.','我没看到。','work','I didn\'t see it, can you resend it?'],
+  ['It must have gone to spam.','可能进垃圾邮件了。','work','It must have gone to spam, let me check.'],
+  ['Let me forward it to you.','我转发给你。','work','Let me forward it to you right now.'],
+  ['Who\'s responsible for this?','这是谁负责的？','work','Who\'s responsible for this part?'],
+  ['I\'m responsible for that.','那部分由我负责。','work','I\'m responsible for that, ask me.'],
+  ['It\'s not my department.','这不归我管。','work','Sorry, it\'s not my department.'],
+  ['I\'ll follow up with them.','我会跟进他们。','work','I\'ll follow up with them this afternoon.'],
+  ['Did you follow up with the client?','你跟进客户了吗？','work','Did you follow up with the client yet?'],
+  ['The client is satisfied.','客户很满意。','work','Great news, the client is satisfied.'],
+  ['We got positive feedback.','我们得到了正面反馈。','work','We got positive feedback from the review.'],
+  ['There\'s a small issue.','有个小问题。','work','There\'s a small issue we need to fix.'],
+  ['We need to fix this ASAP.','我们需要尽快解决。','work','This is blocking us, we need to fix this ASAP.'],
+  ['Let\'s find a solution.','我们找个解决办法吧。','work','Let\'s find a solution together.'],
+  ['There\'s always a way.','总会有办法的。','work','Don\'t give up, there\'s always a way.'],
+  ['Let\'s not overthink it.','我们别想太多。','work','Keep it simple, let\'s not overthink it.'],
+  ['Keep it simple.','简单点。','work','Keep it simple and clear.'],
+  ['Let\'s move forward.','我们继续推进吧。','work','Enough discussion, let\'s move forward.'],
+  ['We\'re on the same page.','我们意见一致。','work','Good, we\'re on the same page now.'],
+  ['That\'s a fair point.','这个观点有道理。','work','That\'s a fair point, I hadn\'t considered it.'],
+  ['I see your point.','我明白你的意思。','work','I see your point, but let me add something.'],
+  ['Fair enough.','说得对 / 有道理。','work','Fair enough, let\'s go with that.'],
+  ['Let\'s compromise.','我们折中一下吧。','work','Let\'s compromise and meet in the middle.'],
+  ['I\'ll make it up to you.','我会补偿你的。','work','Sorry for the trouble, I\'ll make it up to you.'],
+  ['Great job, everyone.','大家做得很好。','work','Great job, everyone, really impressive work.']
+];
+
+const P_MEET = [
+  ['Let\'s kick off.','我们开始吧。','meet','Alright everyone, let\'s kick off.'],
+  ['Thanks for coming.','感谢大家到来。','meet','Thanks for coming on such short notice.'],
+  ['Let\'s go over the agenda.','我们过一遍议程。','meet','Let\'s go over the agenda first.'],
+  ['The first item on the agenda is...','议程第一项是……','meet','The first item on the agenda is the budget.'],
+  ['Let\'s move on to the next point.','我们进入下一个话题。','meet','Any questions? Then let\'s move on.'],
+  ['Before we move on...','在我们继续之前……','meet','Before we move on, one quick note.'],
+  ['Can everyone see the screen?','大家能看到屏幕吗？','meet','Can everyone see the screen clearly?'],
+  ['Can you hear me clearly?','你们能听清我吗？','meet','Can you hear me clearly on the line?'],
+  ['Sorry, you cut out.','抱歉，你的声音断了。','meet','Sorry, you cut out, can you repeat?'],
+  ['Could you repeat that?','你能重复一遍吗？','meet','Could you repeat that last point?'],
+  ['Could you speak up?','你能大声点吗？','meet','Could you speak up a little?'],
+  ['Could you speak slower?','你能说慢点吗？','meet','Could you speak slower, please?'],
+  ['Let me share my screen.','我来共享屏幕。','meet','Let me share my screen so you can see.'],
+  ['I\'ll send the slides to everyone.','我会把幻灯片发给每个人。','meet','I\'ll send the slides to everyone after.'],
+  ['Let\'s take a poll.','我们来投个票。','meet','Let\'s take a quick poll on this.'],
+  ['All in favor?','同意的请举手。','meet','All in favor, raise your hands.'],
+  ['Any objections?','有反对意见吗？','meet','Any objections to the plan?'],
+  ['Let\'s take a vote.','我们投票表决。','meet','Let\'s take a vote and settle it.'],
+  ['The majority agrees.','大多数人同意。','meet','The majority agrees, let\'s proceed.'],
+  ['We\'re split on this.','我们意见有分歧。','meet','We\'re split on this, let\'s discuss more.'],
+  ['Let\'s keep the discussion on track.','我们保持讨论不跑题。','meet','Let\'s keep the discussion on track.'],
+  ['We\'re going off topic.','我们跑题了。','meet','We\'re going off topic, let\'s refocus.'],
+  ['Let\'s stay focused.','我们保持专注。','meet','Let\'s stay focused on the main issue.'],
+  ['We have limited time.','我们时间有限。','meet','We have limited time, so let\'s be efficient.'],
+  ['Let\'s wrap up.','我们总结一下。','meet','It\'s almost time, let\'s wrap up.'],
+  ['Let\'s summarize what we discussed.','我们总结一下讨论的内容。','meet','Let\'s summarize what we discussed today.'],
+  ['Any questions before we end?','结束前还有问题吗？','meet','Any questions before we end the call?'],
+  ['Let\'s schedule a follow-up.','我们安排一次跟进会议。','meet','Let\'s schedule a follow-up next week.'],
+  ['Action items are...','行动事项是……','meet','Action items are listed in the notes.'],
+  ['Who will take the lead?','谁来牵头？','meet','Who will take the lead on this project?'],
+  ['I\'ll take the lead on this.','这个我来牵头。','meet','I\'ll take the lead on this task.'],
+  ['Let\'s assign tasks.','我们来分配任务。','meet','Let\'s assign tasks before we finish.'],
+  ['Does everyone agree?','大家都同意吗？','meet','Does everyone agree with this approach?'],
+  ['I agree with that.','我同意。','meet','I agree with that proposal.'],
+  ['I\'m not sure I agree.','我不太同意。','meet','I\'m not sure I agree, let\'s discuss.'],
+  ['I have a concern.','我有个顾虑。','meet','I have a concern about the timeline.'],
+  ['Let me raise a concern.','我提一个顾虑。','meet','Let me raise a concern before we decide.'],
+  ['That\'s a valid point.','这是个合理的观点。','meet','That\'s a valid point, noted.'],
+  ['Good question.','好问题。','meet','Good question, let me answer.'],
+  ['Let me answer that.','我来回答那个问题。','meet','Let me answer that in detail.'],
+  ['Let\'s be realistic.','我们现实一点。','meet','Let\'s be realistic about the budget.'],
+  ['In an ideal world...','在理想情况下……','meet','In an ideal world, we\'d have more time.'],
+  ['Let\'s consider the options.','我们考虑一下各个选项。','meet','Let\'s consider the options before deciding.'],
+  ['We can revisit this later.','我们稍后再议。','meet','Not urgent, we can revisit this later.'],
+  ['Let\'s table this for now.','这个先放一放。','meet','Let\'s table this for now and move on.'],
+  ['Moving on.','我们继续。','meet','Moving on to the next topic.'],
+  ['To wrap things up...','最后总结一下……','meet','To wrap things up, thanks for today.'],
+  ['Thanks for your input.','谢谢你的意见。','meet','Thanks for your input on this.'],
+  ['Great meeting, everyone.','会议开得很好，各位。','meet','Great meeting, everyone, see you next time.'],
+  ['I\'ll send out the minutes.','我会发会议纪要。','meet','I\'ll send out the minutes this afternoon.']
+];
+
+const P_EMAIL = [
+  ['I\'m writing to you regarding...','我写信是关于……','email','I\'m writing to you regarding the contract.'],
+  ['This is a quick note to...','这是一封简短邮件，想……','email','This is a quick note to confirm our meeting.'],
+  ['Just a friendly reminder that...','温馨提醒一下……','email','Just a friendly reminder that the deadline is Friday.'],
+  ['Attached is the file.','附件是文件。','email','Attached is the file you requested.'],
+  ['I\'ve attached the document for your review.','我已附上文档供你审阅。','email','I\'ve attached the document for your review.'],
+  ['Please see below for details.','详情请见下方。','email','Please see below for details.'],
+  ['FYI.','供参考。','email','FYI, the meeting moved to 3pm.'],
+  ['Please note that...','请注意……','email','Please note that the office will close early.'],
+  ['Please be advised that...','特此告知……','email','Please be advised that there will be a system update.'],
+  ['We would like to inform you that...','我们想通知您……','email','We would like to inform you that prices will change.'],
+  ['Could you please confirm?','您能确认一下吗？','email','Could you please confirm the date?'],
+  ['Please confirm receipt.','请确认收到。','email','Please confirm receipt of this email.'],
+  ['Kindly reply at your earliest convenience.','请尽早回复。','email','Kindly reply at your earliest convenience.'],
+  ['We look forward to your reply.','期待您的回复。','email','We look forward to your reply.'],
+  ['Looking forward to hearing from you.','期待您的消息。','email','Looking forward to hearing from you soon.'],
+  ['I appreciate your prompt response.','感谢您的及时回复。','email','I appreciate your prompt response.'],
+  ['Thank you for your quick response.','谢谢您的快速回复。','email','Thank you for your quick response.'],
+  ['Thanks for getting back to me.','谢谢您回复我。','email','Thanks for getting back to me.'],
+  ['Apologies for the delayed response.','抱歉回复延迟。','email','Apologies for the delayed response.'],
+  ['My apologies for the delay.','抱歉耽搁了。','email','My apologies for the delay in sending this.'],
+  ['I apologize for any inconvenience.','对造成的不便深表歉意。','email','I apologize for any inconvenience caused.'],
+  ['I hope this clarifies things.','希望这能解释清楚。','email','I hope this clarifies things for you.'],
+  ['Please let me know if you have any questions.','如有任何问题请告知。','email','Please let me know if you have any questions.'],
+  ['Don\'t hesitate to reach out.','请随时联系我。','email','Don\'t hesitate to reach out anytime.'],
+  ['Feel free to contact me.','请随时联系我。','email','Feel free to contact me directly.'],
+  ['I\'ll keep you updated.','我会随时向您更新。','email','I\'ll keep you updated on the progress.'],
+  ['I\'ll follow up with you shortly.','我会尽快跟进。','email','I\'ll follow up with you shortly.'],
+  ['I will get back to you by Friday.','我周五前回复您。','email','I will get back to you by Friday.'],
+  ['Let\'s schedule a call.','我们约个电话吧。','email','Let\'s schedule a call to discuss.'],
+  ['Could we find a time to talk?','我们能找个时间聊聊吗？','email','Could we find a time to talk this week?'],
+  ['Please suggest a time that works for you.','请提出您方便的时间。','email','Please suggest a time that works for you.'],
+  ['Would next Monday work?','下周一可以吗？','email','Would next Monday work for the call?'],
+  ['That time works for me.','那个时间我可以。','email','That time works for me, thanks.'],
+  ['I\'m afraid I\'m unavailable then.','恐怕那个时间我不行。','email','I\'m afraid I\'m unavailable then.'],
+  ['Let\'s reschedule.','我们重新安排时间吧。','email','I have a conflict, let\'s reschedule.'],
+  ['The meeting has been moved to...','会议改到……','email','The meeting has been moved to Thursday.'],
+  ['Please find my comments in the document.','我的意见已在文档中。','email','Please find my comments in the document.'],
+  ['I\'ve made some changes.','我做了一些修改。','email','I\'ve made some changes to the draft.'],
+  ['Could you review the latest version?','您能审阅最新版吗？','email','Could you review the latest version?'],
+  ['Please review and give feedback.','请审阅并反馈意见。','email','Please review and give feedback by noon.'],
+  ['We discussed this in our last meeting.','我们上次会议讨论过这个。','email','We discussed this in our last meeting.'],
+  ['As we discussed...','如我们所讨论的……','email','As we discussed, I\'ve prepared the draft.'],
+  ['Following up on our conversation...','跟进我们之前的谈话……','email','Following up on our conversation yesterday.'],
+  ['I wanted to touch base with you.','我想和您沟通一下。','email','I wanted to touch base with you on this.'],
+  ['Let me know your thoughts.','请告诉我您的想法。','email','Let me know your thoughts when you can.'],
+  ['I value your opinion on this.','我很看重您对此的意见。','email','I value your opinion on this matter.'],
+  ['To keep everyone in the loop.','让大家都了解情况。','email','I\'m writing to keep everyone in the loop.'],
+  ['I\'m cc\'ing my manager.','我抄送给我的经理。','email','I\'m cc\'ing my manager on this email.'],
+  ['Please cc me on future emails.','以后的邮件请抄送我。','email','Please cc me on future emails.'],
+  ['I\'ll draft the email and send it.','我会起草邮件并发送。','email','I\'ll draft the email and send it today.']
+];
+
+const P_SOCIAL = [
+  ['It\'s an honor to meet you.','很荣幸认识您。','social','It\'s an honor to meet you in person.'],
+  ['I\'ve heard great things about you.','久仰大名。','social','I\'ve heard great things about your work.'],
+  ['I\'ve been looking forward to meeting you.','我一直期待见到您。','social','I\'ve been looking forward to meeting you.'],
+  ['Thank you for inviting me.','感谢您的邀请。','social','Thank you for inviting me to the event.'],
+  ['Thanks so much for the invitation.','非常感谢你的邀请。','social','Thanks so much for the invitation, I\'d love to come.'],
+  ['The pleasure is all mine.','这是我的荣幸。','social','The pleasure is all mine, really.'],
+  ['Let me introduce you to my team.','让我介绍您认识我的团队。','social','Let me introduce you to my team.'],
+  ['This is my colleague, John.','这是我的同事约翰。','social','This is my colleague, John, he handles sales.'],
+  ['We\'ve met before.','我们之前见过。','social','We\'ve met before at the conference.'],
+  ['Have we met?','我们见过吗？','social','Have we met before? Your face looks familiar.'],
+  ['Your name sounds familiar.','你的名字听起来很耳熟。','social','Your name sounds familiar, have we worked together?'],
+  ['Could I have your business card?','能给我一张您的名片吗？','social','Could I have your business card?'],
+  ['Here\'s my card.','这是我的名片。','social','Here\'s my card, call me anytime.'],
+  ['Let\'s exchange contact information.','我们交换一下联系方式。','social','Let\'s exchange contact information.'],
+  ['I\'ll add you on LinkedIn.','我会加你领英。','social','I\'ll add you on LinkedIn later.'],
+  ['Let\'s connect online.','我们在线上加个好友吧。','social','Let\'s connect online and stay in the loop.'],
+  ['Do you have a WeChat?','你有微信吗？','social','Do you have a WeChat I could add?'],
+  ['I\'ll scan your QR code.','我来扫你的二维码。','social','Let me scan your QR code.'],
+  ['Don\'t lose touch.','别断了联系。','social','Don\'t lose touch, I\'d like to keep talking.'],
+  ['Keep in touch!','常联系！','social','Keep in touch, it was great meeting you!'],
+  ['I\'ll reach out to you soon.','我很快会联系你。','social','I\'ll reach out to you soon about this.'],
+  ['Feel free to reach out anytime.','随时联系我。','social','Feel free to reach out anytime.'],
+  ['My door is always open.','我随时欢迎你来找我。','social','If you need anything, my door is always open.'],
+  ['It was great meeting you.','很高兴认识你。','social','It was great meeting you today.'],
+  ['It was a pleasure talking with you.','和你交谈很愉快。','social','It was a pleasure talking with you.'],
+  ['I really enjoyed our conversation.','我很享受和你的交谈。','social','I really enjoyed our conversation.'],
+  ['Let\'s catch up again soon.','我们很快再聚。','social','Let\'s catch up again soon.'],
+  ['We should have lunch sometime.','我们改天一起吃个午饭吧。','social','We should have lunch sometime.'],
+  ['Let\'s grab dinner after work.','下班后我们一起吃晚饭吧。','social','Let\'s grab dinner after work tonight.'],
+  ['I\'d love to work with you.','我很想和你合作。','social','I\'d love to work with you on this.'],
+  ['This could be a great opportunity.','这可能是个好机会。','social','This could be a great opportunity for us.'],
+  ['Let\'s explore the possibilities.','我们探索一下可能性。','social','Let\'s explore the possibilities together.'],
+  ['I\'m open to new ideas.','我愿意接受新想法。','social','I\'m open to new ideas and suggestions.'],
+  ['We should keep in contact.','我们应该保持联系。','social','We should keep in contact going forward.'],
+  ['Thanks for your time today.','谢谢您今天的时间。','social','Thanks for your time today, it was valuable.'],
+  ['I appreciate your time.','感谢您抽时间。','social','I appreciate your time and insights.'],
+  ['See you at the next event.','下次活动见。','social','See you at the next event, take care.'],
+  ['Enjoy the rest of the evening.','享受今晚的时光。','social','Enjoy the rest of the evening!'],
+  ['Safe travels!','一路平安！','social','Safe travels, see you next week!'],
+  ['Have a safe trip home.','回家路上注意安全。','social','Have a safe trip home.'],
+  ['Congratulations on your promotion!','恭喜你升职！','social','Congratulations on your promotion!'],
+  ['Best wishes for your new role.','祝你在新岗位上一切顺利。','social','Best wishes for your new role.'],
+  ['Welcome to the team!','欢迎加入团队！','social','Welcome to the team, we\'re happy to have you!'],
+  ['Glad to have you on board.','很高兴有你的加入。','social','Glad to have you on board.'],
+  ['We\'re happy you joined us.','我们很高兴你加入。','social','We\'re happy you joined us.'],
+  ['Please make yourself at home.','请别客气。','social','Please make yourself at home.'],
+  ['Can I get you something to drink?','我给你拿点喝的吗？','social','Can I get you something to drink?'],
+  ['Would you like some tea or coffee?','你想喝茶还是咖啡？','social','Would you like some tea or coffee?'],
+  ['Help yourself.','请自便。','social','Help yourself to the snacks.'],
+  ['Let me know if you need anything.','有需要随时告诉我。','social','Let me know if you need anything.']
+];
+
+const P_FEEL = [
+  ['I think so.','我觉得是这样。','feel','I think so, but let\'s double-check.'],
+  ['I don\'t think so.','我不这么认为。','feel','I don\'t think so, actually.'],
+  ['I believe it\'s worth a try.','我觉得值得一试。','feel','I believe it\'s worth a try.'],
+  ['In my opinion...','在我看来……','feel','In my opinion, this is the right call.'],
+  ['From my perspective...','从我的角度看……','feel','From my perspective, it\'s quite simple.'],
+  ['I feel the same way.','我也有同感。','feel','I feel the same way about that.'],
+  ['I feel differently about that.','对那个我有不同看法。','feel','I feel differently about that, sorry.'],
+  ['That\'s a great idea.','这是个好主意。','feel','That\'s a great idea, let\'s do it.'],
+  ['That\'s not a bad idea.','这主意不错。','feel','That\'s not a bad idea at all.'],
+  ['I\'m totally on board.','我完全同意。','feel','I\'m totally on board with the plan.'],
+  ['I\'m against it.','我反对。','feel','I\'m against it, I have my reasons.'],
+  ['I\'m not sure about it.','我不太确定。','feel','I\'m not sure about it yet.'],
+  ['I have mixed feelings.','我心情复杂。','feel','I have mixed feelings about the change.'],
+  ['I\'m on the fence.','我还在犹豫。','feel','I\'m on the fence, give me a day.'],
+  ['It depends.','看情况。','feel','It depends on the situation.'],
+  ['I\'ll think it over.','我会考虑一下。','feel','I\'ll think it over and let you know.'],
+  ['Let me reconsider.','让我重新考虑。','feel','Hearing that, let me reconsider.'],
+  ['I changed my mind.','我改变主意了。','feel','Actually, I changed my mind.'],
+  ['You\'ve convinced me.','你说服我了。','feel','OK, you\'ve convinced me.'],
+  ['I can\'t say for sure.','我不敢确定。','feel','I can\'t say for sure at this point.'],
+  ['It\'s hard to say.','很难说。','feel','It\'s hard to say right now.'],
+  ['That\'s a good question.','这是个好问题。','feel','That\'s a good question, give me a moment.'],
+  ['I never thought about it that way.','我从没那样想过。','feel','I never thought about it that way.'],
+  ['Got it, I understand.','明白了，我理解。','feel','Got it, I understand what you mean.'],
+  ['Now I get it.','现在我明白了。','feel','Oh, now I get it. Thanks!'],
+  ['I\'m a little confused.','我有点困惑。','feel','I\'m a little confused about the steps.'],
+  ['Could you explain it again?','你能再解释一遍吗？','feel','Could you explain it again more slowly?'],
+  ['Let me make sure I understand.','让我确认一下我理解对了。','feel','Let me make sure I understand correctly.'],
+  ['I\'m worried about that.','我担心那个。','feel','I\'m worried about that part.'],
+  ['I\'m concerned about the timeline.','我担心时间安排。','feel','I\'m concerned about the timeline.'],
+  ['Don\'t worry, it\'ll be fine.','别担心，会没事的。','feel','Don\'t worry, it\'ll be fine.'],
+  ['Keep your chin up.','打起精神来。','feel','Keep your chin up, things will improve.'],
+  ['Don\'t lose hope.','别灰心。','feel','Don\'t lose hope, keep trying.'],
+  ['It\'s not the end of the world.','这不是世界末日。','feel','It\'s not the end of the world, relax.'],
+  ['Everything will work out.','一切都会解决的。','feel','Everything will work out in the end.'],
+  ['I\'m really excited about this.','我对这个非常兴奋。','feel','I\'m really excited about this project.'],
+  ['I can\'t wait!','我等不及了！','feel','I can\'t wait to see the result!'],
+  ['I\'m looking forward to it.','我很期待。','feel','I\'m looking forward to the trip.'],
+  ['That\'s wonderful news!','这是好消息！','feel','That\'s wonderful news, congratulations!'],
+  ['I\'m so happy for you.','我真为你高兴。','feel','I\'m so happy for you!'],
+  ['I\'m proud of you.','我为你骄傲。','feel','I\'m proud of you for trying.'],
+  ['You did a great job.','你做得很好。','feel','You did a great job on this.'],
+  ['That must have been hard.','那一定很难。','feel','That must have been hard for you.'],
+  ['I understand how you feel.','我理解你的感受。','feel','I understand how you feel.'],
+  ['Take it easy.','放轻松。','feel','Take it easy, don\'t rush.'],
+  ['Don\'t take it personally.','别往心里去。','feel','It\'s just feedback, don\'t take it personally.'],
+  ['I\'m sorry, it\'s my fault.','对不起，是我的错。','feel','I\'m sorry, it\'s my fault.'],
+  ['I didn\'t mean it.','我不是故意的。','feel','I didn\'t mean it that way.'],
+  ['Let\'s not argue about it.','我们别为这个争论了。','feel','Let\'s not argue about it, OK?'],
+  ['I respect your decision.','我尊重你的决定。','feel','I respect your decision, really.']
+];
+
+const P_PHONE = [
+  ['Hello, this is Anna speaking.','你好，我是安娜。','phone','Hello, this is Anna speaking, how can I help?'],
+  ['May I ask who\'s calling?','请问您是哪位？','phone','May I ask who\'s calling, please?'],
+  ['Who am I speaking with?','请问您是哪位？','phone','Who am I speaking with?'],
+  ['Is this a good time to talk?','现在方便说话吗？','phone','Is this a good time to talk?'],
+  ['Did I catch you at a bad time?','我是不是打扰你了？','phone','Did I catch you at a bad time?'],
+  ['Am I interrupting anything?','我打扰到你了吗？','phone','Am I interrupting anything?'],
+  ['You\'re not interrupting at all.','一点也没打扰。','phone','No, you\'re not interrupting at all.'],
+  ['I\'m glad you called.','很高兴你打电话来。','phone','I\'m glad you called, I wanted to ask you something.'],
+  ['Thanks for calling.','谢谢来电。','phone','Thanks for calling, have a good day.'],
+  ['Could you hold for a moment?','你能稍等吗？','phone','Could you hold for a moment?'],
+  ['Just a second, please.','请稍等。','phone','Just a second, please.'],
+  ['One moment, please.','请稍等一下。','phone','One moment, please.'],
+  ['Please hold the line.','请别挂断。','phone','Please hold the line, I\'ll connect you.'],
+  ['I\'ll put you through.','我帮你转接。','phone','I\'ll put you through to the manager.'],
+  ['Let me transfer you to...','我帮你转到……','phone','Let me transfer you to the sales team.'],
+  ['The line is busy.','线路正忙。','phone','The line is busy, try again in a few minutes.'],
+  ['You\'re breaking up.','你的声音断断续续。','phone','You\'re breaking up, I can barely hear you.'],
+  ['The connection is bad.','信号不好。','phone','The connection is bad on my end.'],
+  ['Can you hear me now?','现在能听到我吗？','phone','Can you hear me now?'],
+  ['Let me call you back.','我回头给你打过去。','phone','Let me call you back in a bit.'],
+  ['I\'ll call you back in five minutes.','我五分钟后打给你。','phone','I\'ll call you back in five minutes.'],
+  ['Can I take a message?','我能带个口信吗？','phone','Can I take a message for him?'],
+  ['Would you like to leave a message?','您要留言吗？','phone','Would you like to leave a message?'],
+  ['Please leave your name and number.','请留下您的姓名和电话。','phone','Please leave your name and number.'],
+  ['I\'ll pass along the message.','我会转达留言。','phone','I\'ll pass along the message to her.'],
+  ['He\'s not available right now.','他现在不方便接电话。','phone','He\'s not available right now.'],
+  ['She\'s in a meeting right now.','她正在开会。','phone','She\'s in a meeting right now.'],
+  ['He\'s on another line.','他在接另一个电话。','phone','He\'s on another line at the moment.'],
+  ['When would be a good time to call back?','什么时候再打过来合适？','phone','When would be a good time to call back?'],
+  ['Please call me back when you\'re free.','你有空时请回电给我。','phone','Please call me back when you\'re free.'],
+  ['I\'m calling about the meeting.','我打电话是想说会议的事。','phone','I\'m calling about the meeting tomorrow.'],
+  ['I\'m calling to confirm the appointment.','我打电话确认一下预约。','phone','I\'m calling to confirm the appointment.'],
+  ['I\'d like to make a reservation.','我想预约。','phone','I\'d like to make a reservation for two.'],
+  ['I\'d like to cancel my appointment.','我想取消预约。','phone','I\'d like to cancel my appointment, sorry.'],
+  ['I need to reschedule.','我需要改期。','phone','I need to reschedule the meeting.'],
+  ['What\'s your phone number?','你的电话号码是多少？','phone','What\'s your phone number, please?'],
+  ['Could you spell that for me?','你能拼一下吗？','phone','Could you spell that for me?'],
+  ['Let me repeat that to confirm.','我重复一遍确认。','phone','Let me repeat that to confirm.'],
+  ['Did I get that right?','我记对了吗？','phone','So it\'s Friday, did I get that right?'],
+  ['I didn\'t catch that.','我没听清。','phone','Sorry, I didn\'t catch that.'],
+  ['Sorry, could you say that again?','抱歉，能再说一遍吗？','phone','Sorry, could you say that again?'],
+  ['Let me check and call you back.','我查一下再打给你。','phone','Let me check and call you back.'],
+  ['I\'ll get back to you on that.','我回头再答复你。','phone','I\'ll get back to you on that.'],
+  ['Thanks for returning my call.','谢谢你回我电话。','phone','Thanks for returning my call.'],
+  ['Sorry for missing your call.','抱歉没接到你的电话。','phone','Sorry for missing your call earlier.'],
+  ['I saw your missed call.','我看到你的未接来电了。','phone','I saw your missed call, what\'s up?'],
+  ['Let\'s touch base by phone.','我们电话沟通一下。','phone','Let\'s touch base by phone later.'],
+  ['We have a bad connection, let\'s try again later.','信号不好，我们稍后再试。','phone','We have a bad connection, let\'s try again later.'],
+  ['I\'ll try calling you later.','我稍后再打给你。','phone','I\'ll try calling you later tonight.'],
+  ['Bye for now, talk soon.','先这样，回头聊。','phone','Bye for now, talk soon!']
+];
+
+const P_DINING = [
+  ['Could I see the menu, please?','能给我看一下菜单吗？','dining','Could I see the menu, please?'],
+  ['What do you recommend?','你推荐什么？','dining','What do you recommend here?'],
+  ['I\'ll have the same.','我也要一样的。','dining','That looks good, I\'ll have the same.'],
+  ['I\'d like to order.','我想点餐。','dining','I\'d like to order now, please.'],
+  ['Could I get the check, please?','能结账吗？','dining','Could I get the check, please?'],
+  ['We\'d like to split the bill.','我们想分开付。','dining','We\'d like to split the bill.'],
+  ['It\'s on me.','我请客。','dining','Don\'t worry about it, it\'s on me.'],
+  ['Let me pay this time.','这次我来付。','dining','Let me pay this time, you paid last time.'],
+  ['Are you ready to order?','您准备好点餐了吗？','dining','Are you ready to order, or need a minute?'],
+  ['I\'m still deciding.','我还在想。','dining','I\'m still deciding, give me a moment.'],
+  ['Could I get some water, please?','能给我来点水吗？','dining','Could I get some water, please?'],
+  ['No ice, please.','请不要加冰。','dining','No ice, please, just room temperature.'],
+  ['It\'s too spicy.','太辣了。','dining','This is too spicy for me.'],
+  ['It\'s a bit salty.','有点咸。','dining','It\'s a bit salty, but still good.'],
+  ['This tastes great.','这个味道很棒。','dining','This tastes great, what\'s in it?'],
+  ['Could I have the recipe?','能给我菜谱吗？','dining','This is delicious, could I have the recipe?'],
+  ['I have a food allergy.','我对食物过敏。','dining','I have a food allergy to peanuts.'],
+  ['Is this vegetarian?','这是素的吗？','dining','Is this dish vegetarian?'],
+  ['Does this contain nuts?','这里面有坚果吗？','dining','Does this contain nuts?'],
+  ['Could we have another table?','我们能换张桌子吗？','dining','Could we have another table by the window?'],
+  ['A table for two, please.','请给我两人桌。','dining','A table for two, please.'],
+  ['Do you have a reservation?','您有预约吗？','dining','Do you have a reservation?'],
+  ['I have a reservation under Smith.','我用史密斯的名字预约的。','dining','I have a reservation under Smith.'],
+  ['How long is the wait?','要等多久？','dining','How long is the wait for a table?'],
+  ['Could we sit by the window?','我们能坐窗边吗？','dining','Could we sit by the window?'],
+  ['Excuse me, waiter.','打扰一下，服务员。','dining','Excuse me, waiter, could we order?'],
+  ['I dropped my fork.','我的叉子掉了。','dining','I dropped my fork, could I get another?'],
+  ['Could we get more napkins?','能再给我们些餐巾纸吗？','dining','Could we get more napkins, please?'],
+  ['It was a wonderful meal.','这顿饭很棒。','dining','It was a wonderful meal, thank you.'],
+  ['Where\'s the nearest subway station?','最近的地铁站在哪？','dining','Where\'s the nearest subway station?'],
+  ['How do I get to the airport?','我怎么去机场？','dining','How do I get to the airport from here?'],
+  ['Is it far from here?','离这里远吗？','dining','Is it far from here?'],
+  ['Could you call me a taxi?','你能帮我叫辆出租车吗？','dining','Could you call me a taxi, please?'],
+  ['How much is the fare?','车费是多少？','dining','How much is the fare to the station?'],
+  ['I\'d like a ticket to the city center.','我想买一张去市中心的票。','dining','I\'d like a ticket to the city center.'],
+  ['Which platform is it on?','在哪个站台？','dining','Which platform is it on?'],
+  ['Does this bus go downtown?','这班车去市中心吗？','dining','Does this bus go downtown?'],
+  ['Could you tell me when to get off?','到站时能提醒我吗？','dining','Could you tell me when to get off?'],
+  ['I got off at the wrong stop.','我下错站了。','dining','I got off at the wrong stop.'],
+  ['I\'m lost.','我迷路了。','dining','I\'m lost, can you help me?'],
+  ['Can you show me on the map?','你能在地图上指给我看吗？','dining','Can you show me on the map?'],
+  ['Turn left at the corner.','在拐角处左转。','dining','Turn left at the corner and go straight.'],
+  ['It\'s just around the corner.','就在拐角附近。','dining','It\'s just around the corner from here.'],
+  ['It\'s a five-minute walk.','走路五分钟。','dining','It\'s a five-minute walk from here.'],
+  ['I\'m looking for this address.','我在找这个地址。','dining','I\'m looking for this address.'],
+  ['What time does it open?','几点开门？','dining','What time does the shop open?'],
+  ['What time does it close?','几点关门？','dining','What time does it close?'],
+  ['I\'m going to check in.','我要办理入住。','dining','I\'m going to check in at the hotel.'],
+  ['I\'d like to check out.','我想退房。','dining','I\'d like to check out now.'],
+  ['Could I have a wake-up call?','能给我叫早服务吗？','dining','Could I have a wake-up call at seven?']
+];
+
+const BUILTIN_PHRASES = [].concat(P_BASE, P_GREET, P_SMALLTALK, P_DAILY, P_WORK, P_MEET, P_EMAIL, P_SOCIAL, P_FEEL, P_PHONE, P_DINING);
+
+/* ============================================================
+   内置内容：语法查漏
+   ============================================================ */
+const G_CATS = [
+  {key:'tense', name:'时态'},
+  {key:'voice', name:'语态'},
+  {key:'clause',name:'从句'},
+  {key:'modal', name:'情态与虚拟'},
+  {key:'word',  name:'词法'},
+  {key:'syntax',name:'句法'}
+];
+
+const BUILTIN_GRAMMAR = [
+  {t:'一般现在时', c:'tense',
+   d:'用于表达经常性动作、客观习惯和普遍事实。主语是第三人称单数时，动词后加 -s / -es。职场中常用来描述日常职责与规律。',
+   ex:['I work in Shanghai.','She works in a tech company.','The report covers three parts.'],
+   q:{t:'She ___ in a software company.', o:['work','works','working','is work'], a:1}},
+  {t:'现在进行时', c:'tense',
+   d:'表示此刻正在进行的动作，或近期已安排好的计划。结构：be + 动词ing。',
+   ex:['I\'m having a meeting right now.','They are preparing the presentation.','We are launching next month.'],
+   q:{t:'We ___ a call with the client now.', o:['have','are having','had','have had'], a:1}},
+  {t:'一般过去时', c:'tense',
+   d:'表示过去某时发生的动作或状态，动词使用过去式。常与 yesterday、last week 等时间词连用。',
+   ex:['I met her yesterday.','He joined the company in 2020.','The meeting ended at noon.'],
+   q:{t:'I ___ the report last night.', o:['finish','finished','finishing','have finished'], a:1}},
+  {t:'现在完成时', c:'tense',
+   d:'表示过去发生但对现在有影响的动作，或从过去持续到现在的状态。结构：have/has + 过去分词。',
+   ex:['I have finished the task.','She has lived here for three years.','We have already signed the contract.'],
+   q:{t:'I ___ already sent the email.', o:['have','had','am','did'], a:0}},
+  {t:'一般将来时', c:'tense',
+   d:'表示将要发生的动作或打算。常用 will、be going to、现在进行时（表计划）表达。',
+   ex:['I will call you tomorrow.','We are going to launch next month.','The meeting starts at nine.'],
+   q:{t:'We ___ the new version next week.', o:['will release','release','released','have released'], a:0}},
+  {t:'被动语态', c:'voice',
+   d:'强调动作的承受者而非执行者。结构：be + 过去分词。正式书面与工作汇报中非常常用。',
+   ex:['The report was written by Tom.','The meeting will be held on Friday.','The file has been updated.'],
+   q:{t:'The documents ___ by the team yesterday.', o:['were prepared','prepared','prepare','are preparing'], a:0}},
+  {t:'情态动词', c:'modal',
+   d:'can/could/may/might/must/should 等表示能力、许可、可能或义务，后接动词原形，无人称变化。',
+   ex:['You should check the details.','Could you help me with this?','We must finish on time.'],
+   q:{t:'You ___ finish it before the deadline.', o:['should','should to','shoulds','to should'], a:0}},
+  {t:'虚拟语气', c:'modal',
+   d:'表达与事实相反的假设或愿望。与现在事实相反：if 从句用过去式，主句用 would/could + 动词原形；be 动词统一用 were。',
+   ex:['If I were you, I would take the offer.','I wish I had more time.','If we left now, we would catch the train.'],
+   q:{t:'If I ___ you, I would accept the job.', o:['were','am','be','been'], a:0}},
+  {t:'定语从句', c:'clause',
+   d:'用 who/which/that 等关系词修饰名词或代词，使表达更精确。who 指人，which/that 指物。',
+   ex:['The person who called you is my manager.','This is the file which I mentioned.','I like the office that has big windows.'],
+   q:{t:'The colleague ___ sits next to me is friendly.', o:['who','what','where','when'], a:0}},
+  {t:'宾语从句', c:'clause',
+   d:'作宾语的从句，语序一律用陈述语序（主语在前）。常用 that、if/whether、疑问词引导。',
+   ex:['I think (that) we can finish on time.','Could you tell me when the meeting starts?','I\'m not sure if he will come.'],
+   q:{t:'Could you tell me ___ the train leaves?', o:['when','who','whose','whom'], a:0}},
+  {t:'条件句（if）', c:'clause',
+   d:'if 从句表示条件。真实条件句：主句用将来时，if 从句用一般现在时（“主将从现”）。',
+   ex:['If it rains, we will stay inside.','If you practice daily, your English will improve.','I\'ll call you if I\'m late.'],
+   q:{t:'If you study hard, you ___ good grades.', o:['will get','get','got','getting'], a:0}},
+  {t:'非谓语动词', c:'word',
+   d:'动名词（doing）与不定式（to do）。动名词常作主语或某些动词（enjoy/finish）的宾语；不定式常表目的或接 want/plan 等。',
+   ex:['Learning English takes time.','I want to improve my speaking.','She enjoys working with the team.'],
+   q:{t:'I enjoy ___ English every day.', o:['practicing','to practice','practice','practiced'], a:0}},
+  {t:'介词', c:'word',
+   d:'时间介词：in 用于月份/年份/季节，on 用于具体日期/星期，at 用于具体时刻。地点同理区分大小范围。',
+   ex:['I was born in 1995.','The meeting is on Monday.','Let\'s meet at 3 p.m.'],
+   q:{t:'The meeting starts ___ 9 o\'clock.', o:['at','on','in','for'], a:0}},
+  {t:'冠词 a / an / the', c:'word',
+   d:'可数名词单数前需要冠词。泛指用 a/an（元音音素前用 an），特指或双方已知用 the。',
+   ex:['She is an engineer.','The report is on the desk.','I have a question.'],
+   q:{t:'He is ___ honest man.', o:['an','a','the','no article'], a:0}},
+  {t:'比较级与最高级', c:'word',
+   d:'比较级：-er 或 more；最高级：-est 或 the most。常与 than、the ... of/in 连用。',
+   ex:['This plan is better than that one.','It\'s the most efficient way.','She speaks faster than me.'],
+   q:{t:'This is ___ project I\'ve ever worked on.', o:['the most challenging','more challenging','most challenging','challenging'], a:0}},
+  {t:'主谓一致', c:'syntax',
+   d:'主语与谓语在人称和数上保持一致。单数主语配单数动词；everyone、each 等不定代词视为单数。',
+   ex:['The team is working hard.','Each employee has a laptop.','Everyone in the office has a computer.'],
+   q:{t:'Everyone in the office ___ a computer.', o:['has','have','are having','having'], a:0}}
+];
+
+/* ============================================================
+   状态与持久化（localStorage）
+   ============================================================ */
+const LS_KEY = 'zhifu_english_v1';
+function keyOf(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+const todayKey = () => keyOf(new Date());
+function addDays(n){ const d=new Date(); d.setDate(d.getDate()+n); return d; }
+function dayKeyOf(d){ return keyOf(d); }
+
+function defaultStore(){
+  return {
+    words:[], phrases:[], checkins:{}, logs:[], seeded:false, contentVer:0
+  };
+}
+const CONTENT_VER = 2; // 内置内容版本：更新内置词库/短语后 +1，触发增量并入
+let store = loadStore();
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ const s = JSON.parse(raw); if(s && s.seeded) return Object.assign(defaultStore(), s); }
+  }catch(e){}
+  return null;
+}
+function seed(){
+  const s = defaultStore();
+  s.words = BUILTIN_WORDS.map((w,i)=>({
+    id:'bw'+i, term:w[0], phon:w[1], mean:w[2], ex:w[3], cat:w[4],
+    prof:0, due:'', src:'builtin'
+  }));
+  s.phrases = BUILTIN_PHRASES.map((p,i)=>({
+    id:'bp'+i, term:p[0], mean:p[1], scene:p[2], ex:p[3]||'', prof:0, due:'', src:'builtin'
+  }));
+  s.seeded = true;
+  s.contentVer = CONTENT_VER;
+  store = s;
+  persist();
+}
+if(!store){ seed(); }
+// 内容增量并入：已有数据升级到新内置内容（保留原有学习进度，仅补齐缺失条目）
+function mergeBuiltin(){
+  let c = 0;
+  const haveW = new Set(store.words.map(w=>w.term.toLowerCase()));
+  BUILTIN_WORDS.forEach((w,i)=>{
+    if(!haveW.has(w[0].toLowerCase())){
+      store.words.push({id:'bw'+Date.now()+c, term:w[0], phon:w[1], mean:w[2], ex:w[3], cat:w[4], prof:0, due:'', src:'builtin'});
+      haveW.add(w[0].toLowerCase()); c++;
+    }
+  });
+  let cp = 0;
+  const haveP = new Set(store.phrases.map(p=>p.term.toLowerCase()));
+  BUILTIN_PHRASES.forEach((p,i)=>{
+    if(!haveP.has(p[0].toLowerCase())){
+      store.phrases.push({id:'bp'+Date.now()+cp, term:p[0], mean:p[1], scene:p[2], ex:p[3]||'', prof:0, due:'', src:'builtin'});
+      haveP.add(p[0].toLowerCase()); cp++;
+    }
+  });
+  store.contentVer = CONTENT_VER;
+  persist();
+}
+if(store.contentVer < CONTENT_VER){ mergeBuiltin(); }
+function persist(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){ console.warn('persist failed', e); } }
+
+const catName = k => { const c = CATS.find(x=>x.key===k); return c?c.name:k; };
+const sceneName = k => { const c = SCENES.find(x=>x.key===k); return c?c.name:k; };
+const gCatName = k => { const c = G_CATS.find(x=>x.key===k); return c?c.name:k; };
+const PROF_LABEL = ['未学','学习中','较熟','熟练','掌握'];
+function allItems(){
+  return store.words.map(w=>Object.assign({kind:'word'}, w))
+    .concat(store.phrases.map(p=>Object.assign({kind:'phrase'}, p)));
+}
+
+/* ---- 学习活动记录（时长 + 打卡） ---- */
+let lastActive = Date.now();
+function logActivity(type, count=1){
+  const now = Date.now();
+  const dt = Math.min((now-lastActive)/1000, 300); // 单次活动最多计 5 分钟
+  lastActive = now;
+  const dk = todayKey();
+  const c = store.checkins[dk] || {sec:0, acts:0};
+  c.sec += Math.round(dt);
+  c.acts += count;
+  store.checkins[dk] = c;
+  store.logs.push({date:dk, type, count, ts:now});
+  if(store.logs.length>2000) store.logs = store.logs.slice(-2000);
+  persist();
+}
+function todayActivity(){ const c = store.checkins[todayKey()]; return c ? c.acts : 0; }
+
+/* ============================================================
+   发音（TTS）
+   ============================================================ */
+function speak(text, rate){
+  if(!('speechSynthesis' in window)){ toast('当前浏览器不支持发音'); return; }
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US'; u.rate = rate || 0.92; u.pitch = 1;
+  speechSynthesis.speak(u);
+}
+
+/* ============================================================
+   路由
+   ============================================================ */
+const ROUTES = ['home','flashcards','words','speaking','grammar','stats','ai'];
+function parseHash(){
+  const h = location.hash.replace(/^#\/?/,'') || 'home';
+  return h.split('?')[0];
+}
+function go(route){ if(location.hash === '#'+route){ render(); } else { location.hash = route; } }
+function setRoute(route){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const el = document.querySelector('.view[data-route="'+route+'"]');
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b=>{
+    b.classList.toggle('on', b.dataset.route===route);
+  });
+  document.getElementById('bottom-nav').style.display = ROUTES.includes(route) ? 'flex' : 'flex';
+  window.scrollTo(0,0);
+}
+
+/* ============================================================
+   渲染：首页
+   ============================================================ */
+function renderHome(){
+  const acts = todayActivity();
+  const done = acts>0;
+  const items = allItems();
+  const t = todayKey();
+  const due = items.filter(x=>x.prof>0 && (!x.due || x.due<=t)).length;
+  const fresh = items.filter(x=>x.prof===0).length;
+  const mastered = items.filter(x=>x.prof>=3).length;
+  const total = items.length;
+  const streak = calcStreak();
+  const todaySec = (store.checkins[todayKey()]||{}).sec||0;
+  const hour = new Date().getHours();
+  const greet = hour<6?'夜深了':hour<12?'早上好':hour<18?'下午好':'晚上好';
+  const pday = store.phrases.length ? store.phrases[Math.floor(Math.random()*store.phrases.length)] : null;
+
+  const el = document.querySelector('[data-route="home"]');
+  el.innerHTML = `
+    <div class="greeting">${greet}</div>
+    <div class="greeting-sub">今天也轻松学一点英语吧</div>
+
+    <div class="checkin-hero">
+      <div class="txt">
+        <div class="big">${done?'今日已打卡':'今日打卡'}</div>
+        <div class="small">${done
+          ? '很棒，已学习 ' + fmtMin(todaySec) + '，连续 ' + streak + ' 天'
+          : '开始今天的学习，打卡积累进度'}</div>
+      </div>
+      <button class="btn" onclick="handleCheckin()">${done?'继续学习':'去打卡'}</button>
+    </div>
+
+    <div class="quick-grid">
+      <button class="quick-card" onclick="go('flashcards')">
+        <div class="num">${due+fresh}</div><div class="lbl">待复习内容</div>
+      </button>
+      <button class="quick-card" onclick="go('speaking')">
+        <div class="num">${store.phrases.length}</div><div class="lbl">口语表达</div>
+      </button>
+      <button class="quick-card" onclick="go('stats')">
+        <div class="num">${mastered}</div><div class="lbl">已掌握内容</div>
+      </button>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-pill"><div class="v">${total}</div><div class="l">词库总量</div></div>
+      <div class="stat-pill"><div class="v">${streak}</div><div class="l">连续打卡</div></div>
+      <div class="stat-pill"><div class="v">${fmtMin(totalSec())}</div><div class="l">累计学习</div></div>
+    </div>
+
+    ${pday ? `
+    <div class="section-title"><h2>今日口语表达</h2><button class="more" onclick="go('speaking')">全部</button></div>
+    <div class="card phrase-of-day">
+      <div style="flex:1">
+        <div class="en">${esc(pday.term)}</div>
+        <div class="cn">${esc(pday.mean)}</div>
+      </div>
+      <button class="btn-icon" data-speak="${esc(pday.term)}">${IC.play}</button>
+    </div>` : ''}
+
+    <div class="section-title"><h2>常用入口</h2></div>
+    <div class="actions-bar">
+      <button class="btn btn-outline" onclick="go('words')">词库管理</button>
+      <button class="btn btn-outline" onclick="go('grammar')">语法查漏</button>
+      <button class="btn btn-outline" onclick="go('ai')">AI 对话</button>
+    </div>
+  `;
+}
+
+function handleCheckin(){
+  const acts = todayActivity();
+  if(acts===0){ logActivity('checkin', 1); }
+  toast('今日打卡成功，继续保持！');
+  render();
+}
+
+/* ============================================================
+   渲染：闪卡
+   ============================================================ */
+let deck = [], deckIdx = 0, sessionStats = null;
+let deckMode = 'all'; // all | word | phrase
+
+function buildDeck(){
+  const t = todayKey();
+  const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+  const pool = [];
+  if(deckMode !== 'phrase'){
+    const dueW = store.words.filter(w=>w.prof>0 && (!w.due || w.due<=t));
+    const newW = store.words.filter(w=>w.prof===0);
+    dueW.forEach(w=>pool.push(Object.assign({kind:'word'}, w)));
+    newW.forEach(w=>pool.push(Object.assign({kind:'word'}, w)));
+  }
+  if(deckMode !== 'word'){
+    const dueP = store.phrases.filter(p=>p.prof>0 && (!p.due || p.due<=t));
+    const newP = store.phrases.filter(p=>p.prof===0);
+    dueP.forEach(p=>pool.push(Object.assign({kind:'phrase'}, p)));
+    newP.forEach(p=>pool.push(Object.assign({kind:'phrase'}, p)));
+  }
+  // 优先复习到期项，再补新内容，总量控制在 40
+  const dueArr = pool.filter(x=>x.prof>0);
+  const newArr = pool.filter(x=>x.prof===0);
+  deck = shuffle(dueArr.slice(0,30)).concat(shuffle(newArr.slice(0,12))).slice(0,40);
+  deck.forEach(w=>w._req=false);
+  deckIdx = 0;
+  sessionStats = {again:0, hard:0, good:0, easy:0, total:deck.length};
+}
+
+function renderFlashcards(){
+  const el = document.querySelector('[data-route="flashcards"]');
+  if(!deck.length){ buildDeck(); }
+  const modes = [['all','全部'],['word','单词'],['phrase','短语']];
+  el.innerHTML = `
+    <div class="chips" style="justify-content:space-between;align-items:center">
+      <div style="display:flex;gap:6px">
+        ${modes.map(m=>`<button class="chip ${deckMode===m[0]?'on':''}" onclick="setDeckMode('${m[0]}')">${m[1]}</button>`).join('')}
+      </div>
+      <button class="btn btn-tonal btn-sm" onclick="openQuickAdd()">${IC.plus}添加</button>
+    </div>
+    <div class="flash-wrap mt12">
+      <div class="flash-progress"><i id="fp-bar" style="width:0%"></i></div>
+      <div class="flash-count" id="fp-count"></div>
+      <div class="flash-card" id="fc-card">
+        <div class="flash-inner" id="fc-inner">
+          <div class="flash-face front" id="fc-front"></div>
+          <div class="flash-face back" id="fc-back"></div>
+        </div>
+      </div>
+      <div class="flash-actions" id="fc-actions">
+        <button class="btn btn-again" onclick="markCard('again')">不认识</button>
+        <button class="btn btn-hard" onclick="markCard('hard')">模糊</button>
+        <button class="btn btn-good" onclick="markCard('good')">认识</button>
+        <button class="btn btn-easy" onclick="markCard('easy')">掌握</button>
+      </div>
+    </div>`;
+  renderCard();
+}
+function setDeckMode(m){ deckMode = m; deck = []; render(); }
+function currentCard(){ return deck[deckIdx]; }
+function toggleFlip(){
+  const c = document.getElementById('fc-card');
+  if(c) c.classList.toggle('flipped');
+}
+function renderCard(){
+  const w = currentCard();
+  if(!w){
+    const wrap = document.querySelector('[data-route="flashcards"] .flash-wrap');
+    if(wrap) wrap.innerHTML = '<div class="flash-summary"><h3>太棒了！</h3><div class="note">本轮复习完成</div><div class="actions-bar"><button class="btn btn-primary btn-block" onclick="buildDeck();render()">再来一轮</button></div></div>';
+    return;
+  }
+  const isPhrase = w.kind === 'phrase';
+  const catLabel = isPhrase ? sceneName(w.scene) : catName(w.cat);
+  document.getElementById('fp-bar').style.width = (deckIdx/deck.length*100)+'%';
+  document.getElementById('fp-count').textContent = (deckIdx+1)+' / '+deck.length;
+  document.getElementById('fc-front').innerHTML = `
+    <span class="category">${esc(catLabel)}${isPhrase?' · 短语':''}</span>
+    <div class="term" style="font-size:${isPhrase?'26px':'32px'}">${esc(w.term)}</div>
+    ${w.phon?'<div class="phon">'+esc(w.phon)+'</div>':''}
+    <button class="btn-icon" data-speak="${esc(w.term)}" style="position:absolute;bottom:46px;left:50%;transform:translateX(-50%)">${IC.play}</button>
+    <div class="flip-hint">点击卡片查看释义</div>`;
+  document.getElementById('fc-back').innerHTML = `
+    <div class="meaning">${esc(w.mean)}</div>
+    ${w.ex?'<div class="example">'+esc(w.ex)+'</div>':''}
+    <div class="flip-hint">${PROF_LABEL[w.prof]} · 点击返回</div>`;
+  const card = document.getElementById('fc-card');
+  card.classList.remove('flipped');
+}
+function markCard(level){
+  const w = currentCard();
+  if(!w) return;
+  const profMap = {again:-1, hard:0, good:1, easy:2};
+  const dayMap  = {again:0, hard:1, good:3, easy:7};
+  w.prof = Math.max(0, Math.min(4, w.prof + profMap[level]));
+  w.due = dayKeyOf(addDays(dayMap[level]));
+  if(level==='again' && !w._req){ w._req = true; deck.push(w); }
+  sessionStats[level]++;
+  logActivity('flash', 1);
+  deckIdx++;
+  if(deckIdx >= deck.length){
+    const wrap = document.querySelector('[data-route="flashcards"] .flash-wrap');
+    const got = sessionStats.good + sessionStats.easy;
+    wrap.innerHTML = `
+      <div class="flash-summary">
+        <h3>本轮完成！</h3>
+        <div class="note">共复习 ${sessionStats.total} 张卡片，认识/掌握 ${got} 张</div>
+        <div class="actions-bar">
+          <button class="btn btn-primary btn-block" onclick="buildDeck();render()">再来一轮</button>
+        </div>
+      </div>`;
+  } else {
+    renderCard();
+  }
+}
+
+/* ============================================================
+   渲染：词库
+   ============================================================ */
+let wordFilter = {cat:'all', q:''};
+function renderWords(){
+  const el = document.querySelector('[data-route="words"]');
+  const list = store.words.filter(w=>
+    (wordFilter.cat==='all' || w.cat===wordFilter.cat) &&
+    (!wordFilter.q || (w.term+' '+w.mean+' '+(w.phon||'')).toLowerCase().includes(wordFilter.q.toLowerCase()))
+  );
+  const chips = ['all'].concat(CATS.map(c=>c.key));
+  el.innerHTML = `
+    <div class="searchbar">
+      ${IC.search}
+      <input id="w-search" placeholder="搜索单词或释义" value="${escAttr(wordFilter.q)}"
+        oninput="wordFilter.q=this.value;renderWordsList()">
+    </div>
+    <div class="chips mt12" id="w-chips">
+      ${chips.map(k=>`<button class="chip ${wordFilter.cat===k?'on':''}" onclick="setWCat('${k}')">${k==='all'?'全部':esc(catName(k))}</button>`).join('')}
+    </div>
+    <div class="section-title"><h2>${wordFilter.cat==='all'?'全部词汇':esc(catName(wordFilter.cat))}（${list.length}）</h2></div>
+    <div id="w-list" class="card"></div>
+    <div class="actions-bar">
+      <button class="btn btn-tonal" onclick="openAddWord()">${IC.plus}添加生词</button>
+      <button class="btn btn-tonal" onclick="openImport()">${IC.import}导入词表</button>
+    </div>
+  `;
+  renderWordsList();
+}
+function setWCat(k){ wordFilter.cat=k; renderWords(); }
+function renderWordsList(){
+  const list = store.words.filter(w=>
+    (wordFilter.cat==='all' || w.cat===wordFilter.cat) &&
+    (!wordFilter.q || (w.term+' '+w.mean+' '+(w.phon||'')).toLowerCase().includes(wordFilter.q.toLowerCase()))
+  );
+  const box = document.getElementById('w-list');
+  if(!box) return;
+  if(!list.length){
+    box.innerHTML = `<div class="empty-state">
+      <div class="t">没有找到相关词汇</div>
+      <div class="s">试试其他关键词，或添加你的生词</div></div>`;
+    return;
+  }
+  box.innerHTML = list.map(w=>`
+    <div class="word-row" onclick="openWordDetail('${w.id}')">
+      <div class="w-main">
+        <div><span class="term">${esc(w.term)}</span>${w.phon?'<span class="phon">'+esc(w.phon)+'</span>':''}</div>
+        <div class="mean">${esc(w.mean)}</div>
+      </div>
+      <span class="dots">${dotsHtml(w.prof,4)}</span>
+      <span class="cat">${esc(catName(w.cat))}</span>
+    </div>`).join('');
+}
+
+/* ---- 添加 / 详情 / 导入 ---- */
+function openAddWord(){
+  const cats = CATS.map(c=>`<option value="${c.key}">${c.name}</option>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>添加生词</h3><button class="btn-icon" onclick="closeModal()">${IC.close}</button></div>
+    <div class="field"><label>单词 / 短语 *</label><input id="aw-term" placeholder="e.g. follow up"></div>
+    <div class="field"><label>音标（可选）</label><input id="aw-phon" placeholder="e.g. ˈfɑːloʊ ʌp"></div>
+    <div class="field"><label>中文释义 *</label><input id="aw-mean" placeholder="e.g. 跟进"></div>
+    <div class="field"><label>例句（可选）</label><textarea id="aw-ex" placeholder="I\'ll follow up with you."></textarea></div>
+    <div class="field"><label>分类</label><select id="aw-cat">${cats}</select></div>
+    <button class="btn btn-primary btn-block" onclick="saveAddWord()">保存</button>
+  `);
+}
+
+/* 闪卡页快速添加（单词 / 短语二选一） */
+let quickAddType = 'word';
+function openQuickAdd(){
+  const wcats = CATS.map(c=>`<option value="${c.key}">${c.name}</option>`).join('');
+  const scats = SCENES.map(c=>`<option value="${c.key}">${c.name}</option>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>快速添加</h3><button class="btn-icon" onclick="closeModal()">${IC.close}</button></div>
+    <div class="prof-row" style="margin-bottom:14px">
+      <button class="prof-seg ${quickAddType==='word'?'on':''}" onclick="setQAType('word')">单词</button>
+      <button class="prof-seg ${quickAddType==='phrase'?'on':''}" onclick="setQAType('phrase')">短语</button>
+    </div>
+    <div class="field"><label>${quickAddType==='word'?'单词':'英文短语'} *</label><input id="qa-term" placeholder="${quickAddType==='word'?'e.g. follow up':'e.g. That makes sense.'}"></div>
+    <div class="field" id="qa-phon-wrap" style="display:${quickAddType==='word'?'':'none'}"><label>音标（可选）</label><input id="qa-phon" placeholder="e.g. ˈfɑːloʊ ʌp"></div>
+    <div class="field"><label>中文释义 *</label><input id="qa-mean" placeholder="e.g. 有道理"></div>
+    <div class="field"><label>例句 / 使用场景（可选）</label><textarea id="qa-ex" placeholder="That makes sense, let\'s do it."></textarea></div>
+    <div class="field" id="qa-cat-wrap" style="display:${quickAddType==='word'?'':'none'}"><label>分类</label><select id="qa-cat">${wcats}</select></div>
+    <div class="field" id="qa-scene-wrap" style="display:${quickAddType==='phrase'?'':'none'}"><label>场景</label><select id="qa-scene">${scats}</select></div>
+    <button class="btn btn-primary btn-block" onclick="saveQuickAdd()">保存</button>
+  `);
+  quickAddType = 'word';
+}
+function setQAType(t){
+  quickAddType = t;
+  const w = quickAddType==='word';
+  document.getElementById('qa-phon-wrap').style.display = w?'':'none';
+  document.getElementById('qa-cat-wrap').style.display = w?'':'none';
+  document.getElementById('qa-scene-wrap').style.display = w?'none':'';
+  document.querySelectorAll('.modal .prof-seg').forEach(b=>b.classList.toggle('on', b.textContent===(w?'单词':'短语')));
+}
+function saveQuickAdd(){
+  const term = document.getElementById('qa-term').value.trim();
+  const mean = document.getElementById('qa-mean').value.trim();
+  if(!term || !mean){ toast('请填写内容与释义'); return; }
+  const ex = document.getElementById('qa-ex').value.trim();
+  if(quickAddType==='word'){
+    const phon = document.getElementById('qa-phon').value.trim();
+    const cat = document.getElementById('qa-cat').value;
+    if(store.words.some(w=>w.term.toLowerCase()===term.toLowerCase())){ toast('该单词已存在'); return; }
+    store.words.push({id:'uw'+Date.now(), term, phon, mean, ex, cat, prof:0, due:'', src:'user'});
+  } else {
+    const scene = document.getElementById('qa-scene').value;
+    if(store.phrases.some(p=>p.term.toLowerCase()===term.toLowerCase())){ toast('该短语已存在'); return; }
+    store.phrases.push({id:'up'+Date.now(), term, mean, scene, ex, prof:0, due:'', src:'user'});
+  }
+  persist(); logActivity('add', 1); closeModal(); toast('已添加：'+term); render();
+}
+function saveAddWord(){
+  const term = document.getElementById('aw-term').value.trim();
+  const mean = document.getElementById('aw-mean').value.trim();
+  if(!term || !mean){ toast('请填写单词和释义'); return; }
+  const phon = document.getElementById('aw-phon').value.trim();
+  const ex = document.getElementById('aw-ex').value.trim();
+  const cat = document.getElementById('aw-cat').value;
+  if(store.words.some(w=>w.term.toLowerCase()===term.toLowerCase())){ toast('该单词已存在'); return; }
+  store.words.push({id:'uw'+Date.now(), term, phon, mean, ex, cat, prof:0, due:'', src:'user'});
+  persist(); logActivity('add', 1); closeModal(); toast('已添加：'+term); render();
+}
+function openWordDetail(id){
+  const w = store.words.find(x=>x.id===id);
+  if(!w) return;
+  openModal(`
+    <div class="modal-head"><h3>${esc(w.term)}</h3><button class="btn-icon" onclick="closeModal()">${IC.close}</button></div>
+    ${w.phon?'<div class="field"><label>音标</label><div>'+esc(w.phon)+'</div></div>':''}
+    <div class="field"><label>释义</label><div>${esc(w.mean)}</div></div>
+    ${w.ex?'<div class="field"><label>例句</label><div>'+esc(w.ex)+'</div></div>':''}
+    <div class="field"><label>分类</label><div>${esc(catName(w.cat))}</div></div>
+    <div class="field"><label>熟练度</label><div>${esc(PROF_LABEL[w.prof])}</div></div>
+    <div class="actions-bar">
+      <button class="btn btn-outline" data-speak="${esc(w.term)}">${IC.play}发音</button>
+      <button class="btn btn-tonal" onclick="closeModal();openEditWord('${w.id}')">编辑</button>
+      <button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="delWord('${w.id}')">删除</button>
+    </div>
+  `);
+}
+function openEditWord(id){
+  const w = store.words.find(x=>x.id===id);
+  if(!w) return;
+  const cats = CATS.map(c=>`<option value="${c.key}" ${c.key===w.cat?'selected':''}>${c.name}</option>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>编辑生词</h3><button class="btn-icon" onclick="closeModal()">${IC.close}</button></div>
+    <div class="field"><label>单词 / 短语 *</label><input id="ew-term" value="${escAttr(w.term)}"></div>
+    <div class="field"><label>音标</label><input id="ew-phon" value="${escAttr(w.phon)}"></div>
+    <div class="field"><label>中文释义 *</label><input id="ew-mean" value="${escAttr(w.mean)}"></div>
+    <div class="field"><label>例句</label><textarea id="ew-ex">${esc(w.ex)}</textarea></div>
+    <div class="field"><label>分类</label><select id="ew-cat">${cats}</select></div>
+    <button class="btn btn-primary btn-block" onclick="saveEditWord('${w.id}')">保存修改</button>
+  `);
+}
+function saveEditWord(id){
+  const w = store.words.find(x=>x.id===id);
+  if(!w) return;
+  w.term = document.getElementById('ew-term').value.trim() || w.term;
+  w.phon = document.getElementById('ew-phon').value.trim();
+  w.mean = document.getElementById('ew-mean').value.trim() || w.mean;
+  w.ex = document.getElementById('ew-ex').value.trim();
+  w.cat = document.getElementById('ew-cat').value;
+  persist(); closeModal(); toast('已保存'); render();
+}
+function delWord(id){
+  const i = store.words.findIndex(x=>x.id===id);
+  if(i>-1){ store.words.splice(i,1); persist(); closeModal(); toast('已删除'); render(); }
+}
+
+function openImport(){
+  openModal(`
+    <div class="modal-head"><h3>导入词表</h3><button class="btn-icon" onclick="closeModal()">${IC.close}</button></div>
+    <div class="import-hint">
+      每行一条，用 制表符(Tab)、逗号 或 | 分隔，字段顺序：<b>单词, 音标, 释义, 例句</b>（音标/例句可省略）。<br>
+      示例：<br>follow up, ˈfɑːloʊ ʌp, 跟进, I'll follow up with you.<br>delegate, 委派
+    </div>
+    <div class="field"><label>粘贴词表</label><textarea id="imp-text" placeholder="在此粘贴，或点击下方按钮选择文件"></textarea></div>
+    <div class="actions-bar">
+      <button class="btn btn-outline" onclick="pickFile()">选择 CSV / txt 文件</button>
+      <button class="btn btn-primary" onclick="doImport()">开始导入</button>
+    </div>
+    <input type="file" class="hidden-file" id="imp-file" accept=".csv,.txt" onchange="readImportFile(event)">
+    <div id="imp-result" class="mt12"></div>
+  `);
+}
+function pickFile(){ document.getElementById('imp-file').click(); }
+function readImportFile(ev){
+  const f = ev.target.files[0];
+  if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ document.getElementById('imp-text').value = r.result; toast('已读取文件，点击开始导入'); };
+  r.readAsText(f, 'utf-8');
+  ev.target.value='';
+}
+function doImport(){
+  const text = document.getElementById('imp-text').value;
+  if(!text.trim()){ toast('请先粘贴或选择词表'); return; }
+  const res = parseImport(text);
+  const box = document.getElementById('imp-result');
+  if(res.added>0) logActivity('import', res.added);
+  box.innerHTML = `<div style="font-size:14px;line-height:1.8;color:var(--text2)">
+    成功导入 <b style="color:var(--green)">${res.added}</b> 条；跳过重复 <b>${res.skip}</b> 条；无效行 <b>${res.bad}</b> 条。</div>`;
+  renderWords();
+}
+function parseImport(text){
+  let added=0, skip=0, bad=0;
+  const lines = text.split(/\r?\n/);
+  for(const raw of lines){
+    const line = raw.trim();
+    if(!line) continue;
+    const parts = line.split(/[\t,|]/).map(s=>s.trim()).filter(Boolean);
+    if(parts.length<2){ bad++; continue; }
+    const term = parts[0];
+    if(store.words.some(w=>w.term.toLowerCase()===term.toLowerCase())){ skip++; continue; }
+    let phon='', mean='', ex='';
+    if(parts.length===2){ mean = parts[1]; }
+    else if(parts.length===3){ phon = parts[1]; mean = parts[2]; }
+    else { phon = parts[1]; mean = parts[2]; ex = parts.slice(3).join(' '); }
+    store.words.push({id:'uw'+Date.now()+added, term, phon, mean, ex, cat:'daily', prof:0, due:'', src:'import'});
+    added++;
+  }
+  persist();
+  return {added, skip, bad};
+}
+
+/* ============================================================
+   渲染：口语
+   ============================================================ */
+let phraseScene = 'all';
+function renderSpeaking(){
+  const el = document.querySelector('[data-route="speaking"]');
+  const chips = ['all'].concat(SCENES.map(c=>c.key));
+  el.innerHTML = `
+    <div class="ai-card" onclick="go('ai')">
+      <div class="ic">${IC.chat}</div>
+      <div style="flex:1">
+        <div class="t">AI 自由对话<span class="tag">即将上线</span></div>
+        <div class="s">与 AI 模拟真实对话，目前先积累表达，敬请期待</div>
+      </div>
+    </div>
+    <div class="section-title"><h2>跟读模仿</h2><span style="font-size:12px;color:var(--text3)">听原音 → 跟读 → 标记熟练度</span></div>
+    <div class="chips">
+      ${chips.map(k=>`<button class="chip ${phraseScene===k?'on':''}" onclick="setScene('${k}')">${k==='all'?'全部':esc(sceneName(k))}</button>`).join('')}
+    </div>
+    <div id="p-list" class="mt12"></div>
+  `;
+  renderPhraseList();
+}
+function setScene(k){ phraseScene=k; renderSpeaking(); }
+function renderPhraseList(){
+  const list = store.phrases.filter(p=>phraseScene==='all'||p.scene===phraseScene);
+  const box = document.getElementById('p-list');
+  if(!box) return;
+  if(!list.length){ box.innerHTML = '<div class="empty-state"><div class="t">暂无表达</div></div>'; return; }
+  box.innerHTML = list.map(p=>`
+    <div class="card phrase-card">
+      <div class="p-top">
+        <div style="flex:1">
+          <div class="p-en">${esc(p.term)}</div>
+          <div class="p-cn">${esc(p.mean)}</div>
+        </div>
+        <button class="btn-icon" data-speak="${esc(p.term)}" data-rate="0.9">${IC.play}</button>
+      </div>
+      ${p.ex?'<div class="p-ex">'+esc(p.ex)+'</div>':''}
+      <div class="prof-row" id="pr-${p.id}">
+        ${[0,1,2,3,4].map(l=>`<button class="prof-seg ${p.prof===l?'on':''}" onclick="setPhraseProf('${p.id}',${l})">${PROF_LABEL[l]}</button>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function setPhraseProf(id, l){
+  const p = store.phrases.find(x=>x.id===id);
+  if(!p) return;
+  p.prof = l;
+  if(l>0) logActivity('speak', 1);
+  persist();
+  // 更新按钮
+  const row = document.getElementById('pr-'+id);
+  if(row){ Array.from(row.children).forEach((b,i)=>b.classList.toggle('on', i===l)); }
+}
+
+/* ============================================================
+   渲染：语法
+   ============================================================ */
+let gramFilter = {cat:'all', q:''};
+function renderGrammar(){
+  const el = document.querySelector('[data-route="grammar"]');
+  el.innerHTML = `
+    <div class="searchbar">
+      ${IC.search}
+      <input id="g-search" placeholder="搜索语法点，如：时态 / if / 被动" value="${escAttr(gramFilter.q)}"
+        oninput="gramFilter.q=this.value;renderGrammarList()">
+    </div>
+    <div class="chips mt12">
+      ${['all'].concat(G_CATS.map(c=>c.key)).map(k=>`<button class="chip ${gramFilter.cat===k?'on':''}" onclick="setGCat('${k}')">${k==='all'?'全部':esc(gCatName(k))}</button>`).join('')}
+    </div>
+    <div class="section-title"><h2>按需查漏</h2><span style="font-size:12px;color:var(--text3)">共 ${BUILTIN_GRAMMAR.length} 个语法点</span></div>
+    <div id="g-list" class="mt12"></div>
+  `;
+  renderGrammarList();
+}
+function setGCat(k){ gramFilter.cat=k; renderGrammar(); }
+function renderGrammarList(){
+  const list = BUILTIN_GRAMMAR.map((g,idx)=>({g,idx})).filter(({g})=>
+    (gramFilter.cat==='all' || g.c===gramFilter.cat) &&
+    (!gramFilter.q || (g.t+' '+g.d).toLowerCase().includes(gramFilter.q.toLowerCase()))
+  );
+  const box = document.getElementById('g-list');
+  if(!box) return;
+  if(!list.length){ box.innerHTML = '<div class="empty-state"><div class="t">没有匹配的语法点</div><div class="s">换个关键词试试</div></div>'; return; }
+  box.innerHTML = list.map(({g,idx})=>`
+    <div class="card gram-card" id="g-${idx}">
+      <div class="g-t"><span>${esc(g.t)}</span><span class="g-cat">${esc(gCatName(g.c))}</span></div>
+      <div class="g-d">${esc(g.d)}</div>
+      <div class="g-ex">${g.ex.map(e=>'· '+esc(e)).join('<br>')}</div>
+      <div class="quiz-box">
+        <div class="q">小测：${esc(g.q.t)}</div>
+        ${g.q.o.map((o,j)=>`<button class="opt" id="opt-${idx}-${j}" onclick="answerQuiz(${idx},${j})">${esc(o)}</button>`).join('')}
+        <div class="quiz-feedback" id="fb-${idx}"></div>
+      </div>
+    </div>`).join('');
+}
+function answerQuiz(gi, chosen){
+  const g = BUILTIN_GRAMMAR[gi];
+  if(!g) return;
+  const box = document.getElementById('g-'+gi);
+  g.q.o.forEach((_,j)=>{
+    const b = document.getElementById('opt-'+gi+'-'+j);
+    b.disabled = true;
+    if(j===g.q.a) b.classList.add('correct');
+    else if(j===chosen) b.classList.add('wrong');
+  });
+  const fb = document.getElementById('fb-'+gi);
+  fb.textContent = chosen===g.q.a ? '回答正确，很好！' : '正确答案：'+g.q.o[g.q.a];
+  fb.className = 'quiz-feedback ' + (chosen===g.q.a?'ok':'no');
+  logActivity('grammar', 1);
+}
+
+/* ============================================================
+   渲染：统计
+   ============================================================ */
+let calOffset = 0;
+function calcStreak(){
+  let n = 0;
+  const d = new Date();
+  if(!(store.checkins[todayKey()])) d.setDate(d.getDate()-1); // 今天没打卡则从昨天起算
+  for(;;){
+    const k = dayKeyOf(d);
+    if(store.checkins[k] && store.checkins[k].acts>0){ n++; d.setDate(d.getDate()-1); }
+    else break;
+  }
+  return n;
+}
+function totalSec(){
+  let s=0; for(const k in store.checkins){ s+=store.checkins[k].sec||0; }
+  return s;
+}
+function fmtMin(sec){ const m = Math.round(sec/60); if(m<60) return m+' 分钟'; return Math.floor(m/60)+' 小时 '+(m%60)+' 分'; }
+function renderStats(){
+  const el = document.querySelector('[data-route="stats"]');
+  const items = allItems();
+  const mastered = items.filter(x=>x.prof>=3).length;
+  const learned = items.filter(x=>x.prof>0).length;
+  const streak = calcStreak();
+  const profDist = [0,1,2,3,4].map(l=>items.filter(x=>x.prof===l).length);
+  const week = last7();
+  el.innerHTML = `
+    <div class="stat-row">
+      <div class="stat-pill"><div class="v">${learned}</div><div class="l">已学词汇</div></div>
+      <div class="stat-pill"><div class="v">${mastered}</div><div class="l">已掌握</div></div>
+      <div class="stat-pill"><div class="v">${streak}</div><div class="l">连续打卡</div></div>
+    </div>
+    <div class="section-title"><h2>打卡日历</h2><div style="font-size:12px;color:var(--text2)">累计学习 ${fmtMin(totalSec())}</div></div>
+    <div class="card" id="cal-card"></div>
+    <div class="section-title"><h2>熟练度分布</h2></div>
+    <div class="card">
+      ${PROF_LABEL.map((l,i)=>`
+        <div class="bar-row">
+          <span class="bl">${l}</span>
+          <span class="bt"><i style="width:${store.words.length?Math.round(profDist[i]/store.words.length*100):0}%"></i></span>
+          <span class="bn">${profDist[i]}</span>
+        </div>`).join('')}
+    </div>
+    <div class="section-title"><h2>近 7 天学习量</h2></div>
+    <div class="card"><div class="week-bars">
+      ${week.map(d=>`
+        <div class="week-bar">
+          <div class="val">${d.acts?d.acts:''}</div>
+          <div class="col" style="height:${d.max?Math.round(d.acts/d.max*100)+'%':'4px'}"></div>
+          <div class="lb">${d.label}</div>
+        </div>`).join('')}
+    </div></div>
+  `;
+  renderCalendar();
+}
+function last7(){
+  const arr = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const k = dayKeyOf(d);
+    const c = store.checkins[k]||{acts:0};
+    arr.push({key:k, acts:c.acts||0, label:['日','一','二','三','四','五','六'][d.getDay()]});
+  }
+  const max = Math.max(1, ...arr.map(x=>x.acts));
+  arr.forEach(x=>x.max=max);
+  return arr;
+}
+function renderCalendar(){
+  const box = document.getElementById('cal-card');
+  if(!box) return;
+  const now = new Date();
+  const base = new Date(now.getFullYear(), now.getMonth()+calOffset, 1);
+  const y = base.getFullYear(), m = base.getMonth();
+  const firstDow = base.getDay();
+  const days = new Date(y, m+1, 0).getDate();
+  const today = todayKey();
+  let html = `
+    <div class="cal-head">
+      <button class="cal-btn" onclick="calOffset--;render()">‹</button>
+      <span class="ym">${y} 年 ${m+1} 月</span>
+      <button class="cal-btn" onclick="calOffset++;render()">›</button>
+    </div>
+    <div class="cal-grid">
+      ${['日','一','二','三','四','五','六'].map(w=>`<div class="wd">${w}</div>`).join('')}
+  `;
+  for(let i=0;i<firstDow;i++) html += '<div></div>';
+  for(let d=1; d<=days; d++){
+    const k = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const done = store.checkins[k] && store.checkins[k].acts>0;
+    const isToday = k===today;
+    html += `<div class="cal-cell ${done?'done':''} ${isToday?'today':''}">${d}</div>`;
+  }
+  html += '</div>';
+  if(calOffset!==0){
+    html += `<div style="text-align:center;margin-top:12px"><button class="btn btn-sm btn-outline" onclick="calOffset=0;render()">回到本月</button></div>`;
+  }
+  box.innerHTML = html;
+}
+
+/* ============================================================
+   渲染：AI 对话（占位）
+   ============================================================ */
+function renderAI(){
+  const el = document.querySelector('[data-route="ai"]');
+  el.innerHTML = `
+    <div class="ai-hero">
+      <div class="orb">${IC.chat}</div>
+      <h2>AI 自由对话</h2>
+      <p>和 AI 像和真人一样用英语聊天，针对你的职场场景即时纠正与引导。该功能正在规划中，将作为下一阶段上线。</p>
+      <div class="card plan-list">
+        ${[['先打基础','通过闪卡与跟读积累高频表达，覆盖日常聊天场景'],
+           ['场景对话','上线后可直接选择「日常聊天 / 会议 / 面试」等场景开始对话'],
+           ['即时反馈','AI 会给出更自然的表达建议，帮你越说越顺']].map((s,i)=>`
+          <div class="plan-step">
+            <div class="n">${i+1}</div>
+            <div><div class="b">${s[0]}</div><div class="s">${s[1]}</div></div>
+          </div>`).join('')}
+      </div>
+      <div class="actions-bar" style="margin-top:20px">
+        <button class="btn btn-primary btn-block" onclick="go('speaking')">先去练口语表达</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   弹窗 & toast
+   ============================================================ */
+function openModal(html){
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `<div class="modal-mask" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
+}
+function closeModal(){ document.getElementById('modal-root').innerHTML=''; }
+let toastTimer=null;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+   工具函数
+   ============================================================ */
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s){ return esc(s).replace(/'/g,'&#39;'); }
+function dotsHtml(prof, max){
+  let h='<span class="dots">';
+  for(let i=0;i<max;i++) h += `<i class="${i<prof?'f':''}"></i>`;
+  return h+'</span>';
+}
+function topSub(text){ document.getElementById('top-sub').textContent = text; }
+
+/* ============================================================
+   总渲染
+   ============================================================ */
+const RENDER = {
+  home: renderHome, flashcards: renderFlashcards, words: renderWords,
+  speaking: renderSpeaking, grammar: renderGrammar, stats: renderStats, ai: renderAI
+};
+const SUBTITLE = {
+  home:'职场英语学习', flashcards:'闪卡 · 词汇记忆', words:'词库管理',
+  speaking:'口语 · 高频表达', grammar:'语法查漏', stats:'学习统计', ai:'AI 自由对话'
+};
+function render(){
+  const route = parseHash();
+  setRoute(route);
+  topSub(SUBTITLE[route]||'');
+  if(RENDER[route]) RENDER[route]();
+}
+
+/* ---- 事件绑定 ---- */
+document.querySelectorAll('.nav-item').forEach(b=>{
+  b.addEventListener('click', ()=>go(b.dataset.route));
+});
+// 全局点击：发音按钮优先，其次闪卡翻面（事件委托，避免内联引号转义问题）
+document.addEventListener('click', e=>{
+  const sp = e.target.closest('[data-speak]');
+  if(sp){ speak(sp.getAttribute('data-speak'), parseFloat(sp.getAttribute('data-rate'))||0.92); return; }
+  const card = e.target.closest('.flash-card');
+  if(card && document.querySelector('[data-route="flashcards"]').classList.contains('active')){
+    card.classList.toggle('flipped');
+  }
+});
+window.addEventListener('hashchange', render);
+document.addEventListener('visibilitychange', ()=>{ lastActive = Date.now(); });
+
+render();
+</script>
+</body>
+</html>
