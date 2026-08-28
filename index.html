@@ -340,6 +340,45 @@ a{color:var(--primary);text-decoration:none}
 .mt16{margin-top:16px}
 .actions-bar{display:flex;gap:10px;margin-top:14px}
 .actions-bar .btn{flex:1}
+
+/* ---- AI 对话 ---- */
+.ai-chat-page{display:flex;flex-direction:column;height:calc(100vh - 115px);margin:-16px -16px -110px}
+.ai-chat-head{display:flex;align-items:center;gap:2px;padding:2px 0 6px}
+.ai-chat-head .role{font-size:15px;font-weight:700;color:var(--primary);padding-left:4px}
+.ai-chat-head .sub{font-size:12px;color:var(--text3);margin-left:8px}
+.ai-msgs{flex:1;overflow-y:auto;padding:6px 2px 4px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.ai-msg{max-width:84%;display:flex;flex-direction:column}
+.ai-msg .bubble{padding:10px 13px;border-radius:16px;font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word}
+.ai-msg.user{align-self:flex-end;align-items:flex-end}
+.ai-msg.user .bubble{background:var(--primary);color:#fff;border-bottom-right-radius:4px}
+.ai-msg.ai{align-self:flex-start;align-items:flex-start}
+.ai-msg.ai .bubble{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px;box-shadow:var(--shadow)}
+.ai-msg .meta{display:flex;align-items:center;gap:2px;margin-top:2px;min-height:22px}
+.ai-msg.user .meta{justify-content:flex-end}
+.ai-typing{display:inline-flex;gap:4px;padding:13px 15px;background:var(--surface);border:1px solid var(--line);border-radius:16px;border-bottom-left-radius:4px;align-self:flex-start;box-shadow:var(--shadow)}
+.ai-typing i{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:blink 1.2s infinite}
+.ai-typing i:nth-child(2){animation-delay:.2s}
+.ai-typing i:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.ai-input-bar{display:flex;gap:8px;align-items:flex-end;padding:8px 0 4px}
+.ai-input-bar .inp{flex:1;display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:6px 6px 6px 16px;min-height:46px}
+.ai-input-bar .inp input{border:none;outline:none;flex:1;background:transparent;font-size:15px;min-width:0}
+.ai-send{width:46px;height:46px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;flex:none;transition:background .15s}
+.ai-send:active{transform:scale(.94)}
+.ai-send svg{width:22px;height:22px}
+.ai-send.mic{background:var(--primary-soft);color:var(--primary)}
+.ai-send.mic.rec{background:var(--red);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(217,48,37,.45)}50%{box-shadow:0 0 0 9px rgba(217,48,37,0)}}
+.ai-setup{text-align:center;padding:28px 8px 8px}
+.ai-setup h2{font-size:22px;font-weight:700;margin:6px 0 8px}
+.ai-setup p{font-size:14px;color:var(--text2);line-height:1.7;max-width:340px;margin:0 auto}
+.ai-setup .orb{width:84px;height:84px;border-radius:50%;margin:0 auto 6px;background:radial-gradient(circle at 32% 28%,#8ab4f8,#1a73e8);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 8px 30px rgba(26,115,232,.35)}
+.ai-setup .orb svg{width:42px;height:42px}
+.ai-chat-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text3);text-align:center;padding:20px}
+.ai-chat-empty svg{width:46px;height:46px;opacity:.35}
+.ai-chat-empty .t{font-size:14px;color:var(--text2);font-weight:500}
+.ai-chat-empty .s{font-size:12px;line-height:1.7;max-width:280px}
+.ai-note{font-size:12px;color:var(--text3);line-height:1.7;background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;margin-top:12px;text-align:left}
 </style>
 </head>
 <body>
@@ -411,7 +450,12 @@ const IC = {
   check:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>',
   chat:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>',
-  checkCircle:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>'
+  checkCircle:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+  mic:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 2.99-1.34 2.99-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>',
+  send:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>',
+  volume:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>'
 };
 
 /* ============================================================
@@ -1783,8 +1827,8 @@ function renderSpeaking(){
     <div class="ai-card" onclick="go('ai')">
       <div class="ic">${IC.chat}</div>
       <div style="flex:1">
-        <div class="t">AI 自由对话<span class="tag">即将上线</span></div>
-        <div class="s">与 AI 模拟真实对话，目前先积累表达，敬请期待</div>
+        <div class="t">AI 自由对话<span class="tag" style="background:var(--green-soft);color:var(--green);border-color:var(--green)">已上线</span></div>
+        <div class="s">和 Mia 用英语日常闲聊，练开口、即时纠错、AI 朗读</div>
       </div>
     </div>
     <div class="section-title"><h2>跟读模仿</h2><span style="font-size:12px;color:var(--text3)">听原音 → 跟读 → 标记熟练度</span></div>
@@ -1986,29 +2030,244 @@ function renderCalendar(){
 }
 
 /* ============================================================
-   渲染：AI 对话（占位）
+   渲染：AI 对话（语音 + 文字，接入大模型）
    ============================================================ */
+const AI_SET_KEY = 'zhifu_ai_settings_v1';
+const AI_MSGS_KEY = 'zhifu_ai_msgs_v1';
+const AI_PROVIDERS = [
+  {key:'deepseek', name:'DeepSeek（推荐）', base:'https://api.deepseek.com', model:'deepseek-chat'},
+  {key:'moonshot', name:'Moonshot Kimi', base:'https://api.moonshot.cn/v1', model:'moonshot-v1-8k'},
+  {key:'zhipu', name:'智谱 GLM', base:'https://open.bigmodel.cn/api/paas/v4', model:'glm-4-flash'},
+  {key:'qwen', name:'通义千问', base:'https://dashscope.aliyuncs.com/compatible-mode/v1', model:'qwen-plus'},
+  {key:'openai', name:'OpenAI', base:'https://api.openai.com/v1', model:'gpt-4o-mini'},
+  {key:'custom', name:'自定义（OpenAI 兼容）', base:'', model:''}
+];
+const AI_SYSTEM = '你是一个友善的英语口语陪练 AI，名字叫 Mia，和用户进行日常英文闲聊，帮助职场人士练开口说英语。规则：1. 尽量用简单自然的英文回复，像朋友聊天；2. 如果用户用中文，你可以用中文简短回应，但尽量引导用户用英文表达，并给出一两句英文示范；3. 用户说错或表达不自然时，温和地简短纠正并给出更自然的说法，不要打断聊天节奏；4. 每次回复 2-4 句话，不要太长；5. 话题围绕日常生活：天气、工作、美食、周末安排、电影音乐、旅行等；6. 结尾可以用一个轻松的问题把话题抛回给用户，鼓励继续聊。';
+
+let aiSettings = aiLoadSettings();
+let aiMsgs = [];
+let aiBusy = false;
+let aiSpeechOn = true;
+let aiRec = null;
+
+function aiLoadSettings(){
+  try{ const r = localStorage.getItem(AI_SET_KEY); if(r){ const s = JSON.parse(r); if(s && s.apiKey) return s; } }catch(e){}
+  return {provider:'deepseek', base:'https://api.deepseek.com', model:'deepseek-chat', apiKey:''};
+}
+function aiSaveSettings(s){ aiSettings = s; try{ localStorage.setItem(AI_SET_KEY, JSON.stringify(s)); }catch(e){} }
+function aiLoadMsgs(){
+  try{ const r = localStorage.getItem(AI_MSGS_KEY); if(r){ const a = JSON.parse(r); if(Array.isArray(a)) return a.slice(-40); } }catch(e){}
+  return [];
+}
+function aiSaveMsgs(){ aiMsgs = aiMsgs.slice(-40); try{ localStorage.setItem(AI_MSGS_KEY, JSON.stringify(aiMsgs)); }catch(e){} }
+function aiConfigured(){ return !!(aiSettings.apiKey && aiSettings.apiKey.trim()); }
+function aiCanMic(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+
 function renderAI(){
   const el = document.querySelector('[data-route="ai"]');
-  el.innerHTML = `
-    <div class="ai-hero">
-      <div class="orb">${IC.chat}</div>
-      <h2>AI 自由对话</h2>
-      <p>和 AI 像和真人一样用英语聊天，针对你的职场场景即时纠正与引导。该功能正在规划中，将作为下一阶段上线。</p>
-      <div class="card plan-list">
-        ${[['先打基础','通过闪卡与跟读积累高频表达，覆盖日常聊天场景'],
-           ['场景对话','上线后可直接选择「日常聊天 / 会议 / 面试」等场景开始对话'],
-           ['即时反馈','AI 会给出更自然的表达建议，帮你越说越顺']].map((s,i)=>`
-          <div class="plan-step">
-            <div class="n">${i+1}</div>
-            <div><div class="b">${s[0]}</div><div class="s">${s[1]}</div></div>
-          </div>`).join('')}
+  if(!aiConfigured()){
+    el.innerHTML = `
+      <div class="ai-setup">
+        <div class="orb">${IC.chat}</div>
+        <h2>AI 自由对话</h2>
+        <p>和 Mia 像朋友一样用英语日常闲聊，练开口、即时纠错、AI 朗读。首次使用需配置一个 AI 接口。</p>
+        <div class="card" style="text-align:left;margin-top:18px">
+          <div class="plan-step"><div class="n">1</div><div><div class="b">申请接口 Key</div><div class="s">推荐 DeepSeek：platform.deepseek.com 注册 → API Keys → 创建（按用量计费，充 10 元可用很久）</div></div></div>
+          <div class="plan-step"><div class="n">2</div><div><div class="b">填入应用</div><div class="s">点下方「配置接口」，选择服务商、粘贴 API Key 即可开始对话</div></div></div>
+        </div>
+        <div class="actions-bar" style="margin-top:20px">
+          <button class="btn btn-primary btn-block" onclick="aiOpenSettings()">配置接口</button>
+        </div>
+        <div class="ai-note">语音：安卓手机浏览器可直接点麦克风说话；iPhone 受系统限制不能录音，用打字输入即可（AI 仍会朗读回复）。</div>
       </div>
-      <div class="actions-bar" style="margin-top:20px">
-        <button class="btn btn-primary btn-block" onclick="go('speaking')">先去练口语表达</button>
+    `;
+    return;
+  }
+  aiMsgs = aiLoadMsgs();
+  el.innerHTML = `
+    <div class="ai-chat-page">
+      <div class="ai-chat-head">
+        <span class="role">Mia · 日常闲聊</span>
+        <span style="flex:1"></span>
+        <button class="btn-icon" onclick="aiOpenSettings()" title="接口设置">${IC.settings}</button>
+        <button class="btn-icon" onclick="aiToggleSpeech()" id="ai-speak-btn" title="AI 朗读开关">${IC.volume}</button>
+        <button class="btn-icon" onclick="aiClear()" title="清空对话">${IC.trash}</button>
+      </div>
+      <div class="ai-msgs" id="ai-msgs"></div>
+      <div class="ai-input-bar">
+        <div class="inp">
+          <input id="ai-input" placeholder="用英语说点什么…" enterkeyhint="send" onkeydown="if(event.key==='Enter')aiSend()">
+          ${aiCanMic()?`<button class="ai-send mic" id="ai-mic-btn" onclick="aiMic()" title="语音输入">${IC.mic}</button>`:''}
+        </div>
+        <button class="ai-send" id="ai-send-btn" onclick="aiSend()">${IC.send}</button>
       </div>
     </div>
   `;
+  const b = document.getElementById('ai-speak-btn');
+  if(b) b.style.opacity = aiSpeechOn ? '1' : '.35';
+  aiRenderMsgs();
+}
+function aiPush(role, text){
+  aiMsgs.push({role, text, ts:Date.now()});
+  aiSaveMsgs();
+}
+function aiClear(){ aiMsgs = []; aiSaveMsgs(); render(); toast('对话已清空'); }
+function aiToggleSpeech(){
+  aiSpeechOn = !aiSpeechOn;
+  const b = document.getElementById('ai-speak-btn');
+  if(b) b.style.opacity = aiSpeechOn ? '1' : '.35';
+  toast(aiSpeechOn ? '已开启 AI 朗读' : '已关闭 AI 朗读');
+}
+function aiRenderMsgs(){
+  const box = document.getElementById('ai-msgs');
+  if(!box) return;
+  if(!aiMsgs.length){
+    box.innerHTML = `<div class="ai-chat-empty">
+      ${IC.chat}
+      <div class="t">和 Mia 聊起来吧</div>
+      <div class="s">说一句日常话题开始，比如 “Hi Mia, how was your day?”</div>
+    </div>`;
+    return;
+  }
+  box.innerHTML = aiMsgs.map(m=>{
+    if(m.role==='user'){
+      return `<div class="ai-msg user"><div class="bubble">${esc(m.text)}</div><div class="meta"></div></div>`;
+    }
+    return `<div class="ai-msg ai"><div class="bubble">${esc(m.text)}</div><div class="meta"><button class="btn-icon" style="width:26px;height:26px" data-speak="${escAttr(m.text)}">${IC.volume}</button></div></div>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+async function aiSend(){
+  if(aiBusy){ return; }
+  const inp = document.getElementById('ai-input');
+  if(!inp) return;
+  const text = (inp.value||'').trim();
+  if(!text){ toast('先输入一句话吧'); return; }
+  inp.value = '';
+  aiPush('user', text);
+  aiRenderMsgs();
+  await aiCall();
+}
+async function aiCall(){
+  if(!aiConfigured()){ aiOpenSettings(); return; }
+  aiBusy = true;
+  const box = document.getElementById('ai-msgs');
+  if(box){
+    const d = document.createElement('div');
+    d.className = 'ai-typing'; d.id = 'ai-typing';
+    d.innerHTML = '<i></i><i></i><i></i>';
+    box.appendChild(d); box.scrollTop = box.scrollHeight;
+  }
+  const history = aiMsgs.map(m=>({role: m.role==='user' ? 'user' : 'assistant', content: m.text}));
+  const payload = {
+    model: aiSettings.model,
+    messages: [{role:'system', content: AI_SYSTEM}].concat(history),
+    temperature: 0.8
+  };
+  try{
+    const base = (aiSettings.base||'').replace(/\/+$/,'');
+    const res = await fetch(base + '/chat/completions', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+aiSettings.apiKey},
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok){
+      let msg = '请求失败 ('+res.status+')';
+      if(res.status===401||res.status===403) msg = 'API Key 无效或已失效，请到设置里检查';
+      else if(res.status===404) msg = '接口地址或模型名有误，请检查设置';
+      else if(res.status===429) msg = '请求过于频繁，请稍后再试';
+      else { try{ const j = await res.json(); if(j.error && j.error.message) msg = String(j.error.message).slice(0,120); }catch(e){} }
+      throw new Error(msg);
+    }
+    const data = await res.json();
+    const reply = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || '').trim();
+    if(!reply) throw new Error('AI 返回为空，请重试');
+    aiPush('ai', reply);
+    aiRenderMsgs();
+    if(aiSpeechOn) speak(reply, 0.95);
+    logActivity('ai', 1);
+  }catch(err){
+    toast('对话失败：' + (err.message || '请检查网络与接口设置'));
+  }finally{
+    aiBusy = false;
+    const t = document.getElementById('ai-typing'); if(t) t.remove();
+    if(box) box.scrollTop = box.scrollHeight;
+  }
+}
+function aiMic(){
+  if(!aiCanMic()){ toast('当前浏览器不支持语音输入'); return; }
+  if(aiRec){ aiRec.stop(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  aiRec = new SR();
+  aiRec.lang = 'en-US';
+  aiRec.interimResults = false;
+  aiRec.maxAlternatives = 1;
+  const btn = document.getElementById('ai-mic-btn');
+  if(btn) btn.classList.add('rec');
+  aiRec.onresult = (ev)=>{
+    const txt = ev.results[0][0].transcript;
+    const inp = document.getElementById('ai-input');
+    if(inp) inp.value = txt;
+    aiSend();
+  };
+  aiRec.onerror = (e)=>{
+    const b = document.getElementById('ai-mic-btn'); if(b) b.classList.remove('rec');
+    if(e.error && e.error !== 'aborted') toast('语音识别失败：' + (e.error==='not-allowed' ? '未授权麦克风，请在浏览器设置中允许' : e.error));
+    aiRec = null;
+  };
+  aiRec.onend = ()=>{ const b = document.getElementById('ai-mic-btn'); if(b) b.classList.remove('rec'); aiRec = null; };
+  aiRec.start();
+}
+function aiOpenSettings(){
+  const s = aiSettings;
+  const opts = AI_PROVIDERS.map(p=>`<option value="${p.key}" ${p.key===s.provider?'selected':''}>${p.name}</option>`).join('');
+  openModal(`
+    <div class="modal-head"><h3>配置 AI 接口</h3><button class="btn-icon" onclick="closeModal()">${IC.close}</button></div>
+    <div class="field">
+      <label>服务商</label>
+      <select id="ai-provider" onchange="aiProviderChanged()">${opts}</select>
+    </div>
+    <div class="field" id="ai-base-field" style="${s.provider==='custom'?'':'display:none'}">
+      <label>接口地址（Base URL）</label>
+      <input id="ai-base" value="${escAttr(s.base)}" placeholder="https://api.example.com/v1">
+    </div>
+    <div class="field">
+      <label>模型</label>
+      <input id="ai-model" value="${escAttr(s.model)}" placeholder="deepseek-chat">
+    </div>
+    <div class="field">
+      <label>API Key</label>
+      <input id="ai-key" type="password" value="${escAttr(s.apiKey)}" placeholder="sk-..." autocomplete="off">
+    </div>
+    <div class="ai-note">Key 仅保存在本机浏览器，不会上传到服务器。申请 Key：platform.deepseek.com 注册 → API Keys → 创建（按用量计费，便宜）。</div>
+    <div class="actions-bar">
+      <button class="btn btn-outline" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="aiSaveSettingsModal()">保存</button>
+    </div>
+  `);
+}
+function aiProviderChanged(){
+  const p = AI_PROVIDERS.find(x=>x.key===document.getElementById('ai-provider').value);
+  if(!p) return;
+  document.getElementById('ai-base-field').style.display = p.key==='custom' ? '' : 'none';
+  if(p.key!=='custom'){
+    document.getElementById('ai-base').value = p.base;
+    document.getElementById('ai-model').value = p.model;
+  }
+}
+function aiSaveSettingsModal(){
+  const provider = document.getElementById('ai-provider').value;
+  const p = AI_PROVIDERS.find(x=>x.key===provider);
+  let base = document.getElementById('ai-base').value.trim();
+  const model = document.getElementById('ai-model').value.trim();
+  const apiKey = document.getElementById('ai-key').value.trim();
+  if(provider!=='custom' && p) base = p.base;
+  if(!apiKey){ toast('请填写 API Key'); return; }
+  if(!model){ toast('请填写模型名'); return; }
+  aiSaveSettings({provider, base, model, apiKey});
+  closeModal();
+  toast('接口已保存');
+  render();
 }
 
 /* ============================================================
