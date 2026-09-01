@@ -1306,6 +1306,13 @@ const BUILTIN_GRAMMAR = [
    状态与持久化（localStorage）
    ============================================================ */
 const LS_KEY = 'zhifu_english_v1';
+/* ---- 视图渲染缓存：切换页面时避免全量重建（性能优化） ---- */
+const _vhtml = {};
+const _vdirty = {};
+function markDirty(route){
+  if(route){ _vdirty[route] = true; return; }
+  for(const r of ['home','flashcards','words','speaking','grammar','stats','ai','profile']) _vdirty[r] = true;
+}
 function keyOf(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 const todayKey = () => keyOf(new Date());
 function addDays(n){ const d=new Date(); d.setDate(d.getDate()+n); return d; }
@@ -1362,7 +1369,7 @@ function mergeBuiltin(){
   persist();
 }
 if(store.contentVer < CONTENT_VER){ mergeBuiltin(); }
-function persist(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){ console.warn('persist failed', e); } queueSync(); }
+function persist(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){ console.warn('persist failed', e); } markDirty(); queueSync(); }
 
 /* ============================================================
    账号同步（Supabase 云端）
@@ -1543,6 +1550,7 @@ async function afterAuth(user){
   try{ localStorage.setItem(LS_AUTH_KEY, JSON.stringify({id:user.id, email:user.email})); }catch(e){}
   toast('登录成功，正在同步数据…');
   try{ await syncMerge(); }catch(e){}
+  markDirty('profile');
   render();
   toast('登录成功，数据已同步');
 }
@@ -1550,6 +1558,7 @@ async function pfLogout(){
   try{ if(sb) await sb.auth.signOut(); }catch(e){}
   authUser = null;
   try{ localStorage.removeItem(LS_AUTH_KEY); }catch(e){}
+  markDirty('profile');
   render(); toast('已退出登录');
 }
 async function pfSync(){
@@ -1777,6 +1786,7 @@ function buildDeck(){
   deck.forEach(w=>w._req=false);
   deckIdx = 0;
   sessionStats = {again:0, hard:0, good:0, easy:0, total:deck.length};
+  markDirty('flashcards');
 }
 
 function renderFlashcards(){
@@ -1808,7 +1818,7 @@ function renderFlashcards(){
     </div>`;
   renderCard();
 }
-function setDeckMode(m){ deckMode = m; deck = []; render(); }
+function setDeckMode(m){ deckMode = m; deck = []; markDirty('flashcards'); render(); }
 function currentCard(){ return deck[deckIdx]; }
 function toggleFlip(){
   const c = document.getElementById('fc-card');
@@ -1900,7 +1910,7 @@ function renderWords(){
   `;
   renderWordsList();
 }
-function setWCat(k){ wordFilter.cat=k; renderWords(); }
+function setWCat(k){ wordFilter.cat=k; markDirty('words'); render(); }
 function renderWordsList(){
   const list = store.words.filter(w=>
     (wordFilter.cat==='all' || w.cat===wordFilter.cat) &&
@@ -2081,7 +2091,7 @@ function doImport(){
   if(res.added>0) queueItemSync();
   box.innerHTML = `<div style="font-size:14px;line-height:1.8;color:var(--text2)">
     成功导入 <b style="color:var(--green)">${res.added}</b> 条；跳过重复 <b>${res.skip}</b> 条；无效行 <b>${res.bad}</b> 条。</div>`;
-  renderWords();
+  render();
 }
 function parseImport(text){
   let added=0, skip=0, bad=0;
@@ -2127,7 +2137,7 @@ function renderSpeaking(){
   `;
   renderPhraseList();
 }
-function setScene(k){ phraseScene=k; renderSpeaking(); }
+function setScene(k){ phraseScene=k; markDirty('speaking'); render(); }
 function renderPhraseList(){
   const list = store.phrases.filter(p=>phraseScene==='all'||p.scene===phraseScene);
   const box = document.getElementById('p-list');
@@ -2181,7 +2191,7 @@ function renderGrammar(){
   `;
   renderGrammarList();
 }
-function setGCat(k){ gramFilter.cat=k; renderGrammar(); }
+function setGCat(k){ gramFilter.cat=k; markDirty('grammar'); render(); }
 function renderGrammarList(){
   const list = BUILTIN_GRAMMAR.map((g,idx)=>({g,idx})).filter(({g})=>
     (gramFilter.cat==='all' || g.c===gramFilter.cat) &&
@@ -2298,9 +2308,9 @@ function renderCalendar(){
   const today = todayKey();
   let html = `
     <div class="cal-head">
-      <button class="cal-btn" onclick="calOffset--;render()">‹</button>
+      <button class="cal-btn" onclick="calOffset--;markDirty('stats');render()">‹</button>
       <span class="ym">${y} 年 ${m+1} 月</span>
-      <button class="cal-btn" onclick="calOffset++;render()">›</button>
+      <button class="cal-btn" onclick="calOffset++;markDirty('stats');render()">›</button>
     </div>
     <div class="cal-grid">
       ${['日','一','二','三','四','五','六'].map(w=>`<div class="wd">${w}</div>`).join('')}
@@ -2314,7 +2324,7 @@ function renderCalendar(){
   }
   html += '</div>';
   if(calOffset!==0){
-    html += `<div style="text-align:center;margin-top:12px"><button class="btn btn-sm btn-outline" onclick="calOffset=0;render()">回到本月</button></div>`;
+    html += `<div style="text-align:center;margin-top:12px"><button class="btn btn-sm btn-outline" onclick="calOffset=0;markDirty('stats');render()">回到本月</button></div>`;
   }
   box.innerHTML = html;
 }
@@ -2401,7 +2411,7 @@ function aiPush(role, text){
   aiMsgs.push({role, text, ts:Date.now()});
   aiSaveMsgs();
 }
-function aiClear(){ aiMsgs = []; aiSaveMsgs(); render(); toast('对话已清空'); }
+function aiClear(){ aiMsgs = []; aiSaveMsgs(); markDirty('ai'); render(); toast('对话已清空'); }
 function aiToggleSpeech(){
   aiSpeechOn = !aiSpeechOn;
   const b = document.getElementById('ai-speak-btn');
@@ -2557,6 +2567,7 @@ function aiSaveSettingsModal(){
   aiSaveSettings({provider, base, model, apiKey});
   closeModal();
   toast('接口已保存');
+  markDirty('ai');
   render();
 }
 
@@ -2603,7 +2614,12 @@ function render(){
   const route = parseHash();
   setRoute(route);
   topSub(SUBTITLE[route]||'');
-  if(RENDER[route]) RENDER[route]();
+  if(!RENDER[route]) return;
+  // 性能优化：视图 DOM 常驻页面，数据未变化时直接复用，避免每次切换全量重建
+  if(_vhtml[route] && !_vdirty[route]) return;
+  RENDER[route]();
+  _vhtml[route] = true;
+  _vdirty[route] = false;
 }
 
 /* ---- 事件绑定 ---- */
