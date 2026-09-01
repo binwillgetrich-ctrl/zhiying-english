@@ -53,7 +53,7 @@ a{color:var(--primary);text-decoration:none}
 .topbar{
   position:sticky;top:0;z-index:50;
   display:flex;align-items:center;gap:8px;
-  padding:12px 16px;background:rgba(255,255,255,.92);
+  padding:calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;background:rgba(255,255,255,.92);
   backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
 }
 .topbar .brand{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:700;letter-spacing:.2px}
@@ -64,7 +64,7 @@ a{color:var(--primary);text-decoration:none}
 .topbar .sub{font-size:12px;color:var(--text3);margin-top:1px}
 
 /* ---- 视图容器 ---- */
-.view{display:none;padding:16px 16px 110px}
+.view{display:none;padding:16px 16px calc(116px + env(safe-area-inset-bottom, 0px))}
 .view.active{display:block}
 
 /* ---- 底部导航 ---- */
@@ -247,6 +247,9 @@ a{color:var(--primary);text-decoration:none}
 .rec-feedback .rec-want,.rec-feedback .rec-heard{font-size:13px;margin-top:3px}
 .rec-feedback .rec-tip{margin-top:6px;font-size:13px}
 .rec-hint{font-size:13px;color:var(--primary)}
+/* ---- 账号 ---- */
+.forgot-row{text-align:right;margin:-2px 0 8px}
+.forgot-link{font-size:13px;color:var(--primary);font-weight:500;padding:4px 2px}
 .ai-card{
   border:1px dashed var(--primary);background:var(--primary-soft);
   border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:14px;
@@ -1585,6 +1588,41 @@ async function pfLogout(){
   markDirty('profile');
   render(); toast('已退出登录');
 }
+
+/* ---- 忘记密码 / 设置新密码 ---- */
+let recoveryMode = false;
+function resetRedirect(){
+  // 网页/PWA 回跳本应用；APK（https://localhost）则回跳网页版完成重置
+  if(location.origin && location.origin.indexOf('github.io') !== -1){
+    return location.origin + location.pathname + '#profile';
+  }
+  return 'https://binwillgetrich-ctrl.github.io/zhiying-english/index.html#profile';
+}
+async function pfForgot(){
+  if(!sb){ toast('云端服务暂不可用'); return; }
+  const email = pfEmail();
+  if(!email){ authMsg('请先填写邮箱'); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ authMsg('邮箱格式不正确'); return; }
+  authMsg('发送重置邮件中…');
+  try{
+    const {error} = await sb.auth.resetPasswordForEmail(email, {redirectTo: resetRedirect()});
+    if(error){ authMsg(sbErr(error)); return; }
+    authMsg('重置邮件已发送，请到邮箱点击链接设置新密码', true);
+  }catch(e){ authMsg('网络异常，请重试'); }
+}
+async function pfResetPass(){
+  const pass = document.getElementById('pf-newpass') ? document.getElementById('pf-newpass').value : '';
+  if(pass.length<6){ authMsg('密码至少 6 位'); return; }
+  authMsg('保存中…');
+  try{
+    const {error} = await sb.auth.updateUser({password: pass});
+    if(error){ authMsg(sbErr(error)); return; }
+    recoveryMode = false;
+    try{ history.replaceState(null, '', location.pathname + location.search + '#profile'); }catch(e){}
+    toast('密码已更新');
+    markDirty('profile'); render();
+  }catch(e){ authMsg('网络异常，请重试'); }
+}
 async function pfSync(){
   if(!authUser || !sb){ toast('请先登录'); return; }
   toast('正在同步…');
@@ -1603,6 +1641,19 @@ function renderProfile(){
       </div>`;
     return;
   }
+  if(recoveryMode){
+    const rem = authUser && authUser.email ? authUser.email : '';
+    el.innerHTML = `
+      <div class="section-title"><h2>设置新密码</h2></div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:16px">为 ${esc(rem)} 设置一个新密码，之后用新密码登录。</div>
+        <div class="field"><label>新密码</label><input id="pf-newpass" type="password" placeholder="至少 6 位" autocomplete="new-password"></div>
+        <div id="pf-msg" class="auth-msg"></div>
+        <button class="btn btn-primary btn-block" onclick="pfResetPass()">设置新密码</button>
+      </div>
+    `;
+    return;
+  }
   if(!authUser){
     el.innerHTML = `
       <div class="section-title"><h2>我的 · 账号</h2></div>
@@ -1611,6 +1662,7 @@ function renderProfile(){
         <div style="font-size:13px;color:var(--text2);line-height:1.7;margin:6px 0 16px">换手机、换设备登录同一账号，词汇、熟练度、打卡记录自动同步；每个账号数据相互独立，互不影响。</div>
         <div class="field"><label>邮箱</label><input id="pf-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
         <div class="field"><label>密码</label><input id="pf-pass" type="password" placeholder="至少 6 位" autocomplete="new-password"></div>
+        <div class="forgot-row"><button class="forgot-link" onclick="pfForgot()">忘记密码？</button></div>
         <div id="pf-msg" class="auth-msg"></div>
         <button class="btn btn-primary btn-block" onclick="pfLogin()">登 录</button>
         <button class="btn btn-tonal btn-block mt12" onclick="pfSignup()">注册新账号</button>
@@ -1641,6 +1693,13 @@ async function initAuth(){
     const {data} = await sb.auth.getSession();
     if(data && data.session){
       authUser = data.session.user;
+      // 密码重置回跳：URL 带 type=recovery → 进入设置新密码
+      if(location.hash.indexOf('type=recovery') !== -1){
+        recoveryMode = true;
+        try{ localStorage.setItem(LS_AUTH_KEY, JSON.stringify({id:authUser.id, email:authUser.email})); }catch(e){}
+        markDirty('profile'); render();
+        return;
+      }
       await syncMerge();
       render();
     }
@@ -1701,15 +1760,39 @@ if('speechSynthesis' in window){
   speechSynthesis.onvoiceschanged = function(){ _ttsVoiceLoaded = false; };
 }
 function speak(text, rate){
-  if(!('speechSynthesis' in window)){ toast('当前浏览器不支持发音'); return; }
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  const v = pickVoice();
-  if(v){ u.voice = v; u.lang = v.lang || 'en-US'; } else { u.lang = 'en-US'; }
-  u.rate = rate || 0.92; u.pitch = 1;
-  speechSynthesis.speak(u);
+  const r = rate || 0.92;
+  if('speechSynthesis' in window){
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = pickVoice();
+    if(v){ u.voice = v; u.lang = v.lang || 'en-US'; } else { u.lang = 'en-US'; }
+    u.rate = r; u.pitch = 1;
+    let started = false, timedOut = false;
+    u.onstart = function(){ started = true; };
+    u.onerror = function(){ if(!started && !timedOut){ timedOut = true; speechSynthesis.cancel(); speakOnline(text, r); } };
+    speechSynthesis.speak(u);
+    // 部分设备虽有接口但无语音包（静默失败），900ms 未真正出声则回退在线发音
+    setTimeout(function(){
+      if(!started && !timedOut){ timedOut = true; try{ speechSynthesis.cancel(); }catch(e){} speakOnline(text, r); }
+    }, 900);
+    return;
+  }
+  speakOnline(text, r);
 }
-function speakStop(){ if('speechSynthesis' in window){ speechSynthesis.cancel(); } }
+let _audioTTS = null;
+function speakOnline(text, rate){
+  if(_audioTTS){ try{ _audioTTS.pause(); }catch(e){} _audioTTS = null; }
+  // Google TTS 在线发音：无需系统语音包，任何浏览器/WebView 均可播放
+  const url = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=' + encodeURIComponent(text);
+  const a = new Audio(url);
+  try{ a.playbackRate = rate || 0.92; }catch(e){}
+  _audioTTS = a;
+  a.play().catch(function(){ toast('发音需联网（当前设备无语音包）'); });
+}
+function speakStop(){
+  if('speechSynthesis' in window){ try{ speechSynthesis.cancel(); }catch(e){} }
+  if(_audioTTS){ try{ _audioTTS.pause(); _audioTTS = null; }catch(e){} }
+}
 
 /* ============================================================
    跟读评分 + 听力练习
