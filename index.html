@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="职英英语">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='22' fill='%231a73e8'/%3E%3Ctext x='48' y='64' font-size='46' text-anchor='middle' fill='%23ffffff' font-family='sans-serif'%3E职%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>职英 · 每日英语</title>
 <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Roboto:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
 <style>
@@ -2650,6 +2650,10 @@ document.addEventListener('visibilitychange', ()=>{ lastActive = Date.now(); });
 
 render();
 initAuth();
+// 注册 Service Worker：支持桌面安装与离线使用
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('SW 注册失败', e); });
+}
 </script>
 </body>
 </html>
