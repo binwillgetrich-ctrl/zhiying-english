@@ -65,8 +65,7 @@ a{color:var(--primary);text-decoration:none}
 
 /* ---- 视图容器 ---- */
 .view{display:none;padding:16px 16px 110px}
-.view.active{display:block;animation:fadeIn .22s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.view.active{display:block}
 
 /* ---- 底部导航 ---- */
 .bottom-nav{
@@ -203,6 +202,7 @@ a{color:var(--primary);text-decoration:none}
 .word-row{
   display:flex;align-items:center;gap:10px;padding:13px 4px;
   border-bottom:1px solid var(--line);cursor:pointer;
+  content-visibility:auto;contain-intrinsic-size:auto 62px;
 }
 .word-row:last-child{border-bottom:none}
 .word-row .w-main{flex:1;min-width:0}
@@ -215,6 +215,7 @@ a{color:var(--primary);text-decoration:none}
 .empty-state .s{font-size:13px;line-height:1.6}
 
 /* ---- 口语 ---- */
+.phrase-card{content-visibility:auto;contain-intrinsic-size:auto 150px}
 .phrase-card .p-top{display:flex;align-items:flex-start;gap:12px}
 .phrase-card .p-en{font-size:17px;font-weight:700;line-height:1.4;flex:1}
 .phrase-card .p-cn{font-size:14px;color:var(--text2);margin-top:4px}
@@ -1313,6 +1314,10 @@ function markDirty(route){
   if(route){ _vdirty[route] = true; return; }
   for(const r of ['home','flashcards','words','speaking','grammar','stats','ai','profile']) _vdirty[r] = true;
 }
+/* 学习活动变化（打卡/时长）：只影响首页与统计 */
+function markHomeStats(){ _vdirty.home = true; _vdirty.stats = true; }
+/* 词条内容变化（增删改/熟练度）：影响首页、统计、词库、口语 */
+function markItemViews(){ _vdirty.home = true; _vdirty.stats = true; _vdirty.words = true; _vdirty.speaking = true; }
 function keyOf(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 const todayKey = () => keyOf(new Date());
 function addDays(n){ const d=new Date(); d.setDate(d.getDate()+n); return d; }
@@ -1369,7 +1374,7 @@ function mergeBuiltin(){
   persist();
 }
 if(store.contentVer < CONTENT_VER){ mergeBuiltin(); }
-function persist(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){ console.warn('persist failed', e); } markDirty(); queueSync(); }
+function persist(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){ console.warn('persist failed', e); } queueSync(); }
 
 /* ============================================================
    账号同步（Supabase 云端）
@@ -1496,6 +1501,7 @@ async function syncMerge(){
     const cloud = await pullAll();
     mergeCloud(cloud);
     persist();
+    markDirty();
     lastItemSyncTs = 0;
     dirtyItems = true;
     await pushIncremental();
@@ -1646,6 +1652,7 @@ function logActivity(type, count=1){
   store.logs.push({date:dk, type, count, ts:now});
   if(store.logs.length>2000) store.logs = store.logs.slice(-2000);
   persist();
+  markHomeStats();
 }
 function todayActivity(){ const c = store.checkins[todayKey()]; return c ? c.acts : 0; }
 
@@ -1864,6 +1871,7 @@ function markCard(level){
   sessionStats[level]++;
   logActivity('flash', 1);
   queueItemSync();
+  if(w.kind==='word') _vdirty.words = true; else _vdirty.speaking = true;
   deckIdx++;
   if(deckIdx >= deck.length){
     const wrap = document.querySelector('[data-route="flashcards"] .flash-wrap');
@@ -1993,7 +2001,7 @@ function saveQuickAdd(){
     if(store.phrases.some(p=>p.term.toLowerCase()===term.toLowerCase())){ toast('该短语已存在'); return; }
     store.phrases.push({id:'up'+Date.now(), term, mean, scene, ex, prof:0, due:'', src:'user', _ts:nowTs()});
   }
-  persist(); logActivity('add', 1); queueItemSync(); closeModal(); toast('已添加：'+term); render();
+  persist(); logActivity('add', 1); queueItemSync(); closeModal(); toast('已添加：'+term); markItemViews(); render();
 }
 function saveAddWord(){
   const term = document.getElementById('aw-term').value.trim();
@@ -2004,7 +2012,7 @@ function saveAddWord(){
   const cat = document.getElementById('aw-cat').value;
   if(store.words.some(w=>w.term.toLowerCase()===term.toLowerCase())){ toast('该单词已存在'); return; }
   store.words.push({id:'uw'+Date.now(), term, phon, mean, ex, cat, prof:0, due:'', src:'user', _ts:nowTs()});
-  persist(); logActivity('add', 1); queueItemSync(); closeModal(); toast('已添加：'+term); render();
+  persist(); logActivity('add', 1); queueItemSync(); closeModal(); toast('已添加：'+term); markItemViews(); render();
 }
 function openWordDetail(id){
   const w = store.words.find(x=>x.id===id);
@@ -2046,13 +2054,13 @@ function saveEditWord(id){
   w.ex = document.getElementById('ew-ex').value.trim();
   w.cat = document.getElementById('ew-cat').value;
   w._ts = nowTs();
-  persist(); closeModal(); toast('已保存'); render();
+  persist(); closeModal(); toast('已保存'); markItemViews(); render();
   queueItemSync();
 }
 async function delWord(id){
   const i = store.words.findIndex(x=>x.id===id);
   if(i>-1){
-    store.words.splice(i,1); persist(); closeModal(); toast('已删除'); render();
+    store.words.splice(i,1); persist(); closeModal(); toast('已删除'); markItemViews(); render();
     if(authUser && sb){ try{ await sb.from('items').delete().eq('id', id); }catch(e){} }
   }
 }
@@ -2091,6 +2099,7 @@ function doImport(){
   if(res.added>0) queueItemSync();
   box.innerHTML = `<div style="font-size:14px;line-height:1.8;color:var(--text2)">
     成功导入 <b style="color:var(--green)">${res.added}</b> 条；跳过重复 <b>${res.skip}</b> 条；无效行 <b>${res.bad}</b> 条。</div>`;
+  markItemViews();
   render();
 }
 function parseImport(text){
@@ -2166,6 +2175,7 @@ function setPhraseProf(id, l){
   if(l>0) logActivity('speak', 1);
   persist();
   queueItemSync();
+  markHomeStats();
   // 更新按钮
   const row = document.getElementById('pr-'+id);
   if(row){ Array.from(row.children).forEach((b,i)=>b.classList.toggle('on', i===l)); }
