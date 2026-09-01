@@ -379,6 +379,14 @@ a{color:var(--primary);text-decoration:none}
 .ai-chat-empty .t{font-size:14px;color:var(--text2);font-weight:500}
 .ai-chat-empty .s{font-size:12px;line-height:1.7;max-width:280px}
 .ai-note{font-size:12px;color:var(--text3);line-height:1.7;background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;margin-top:12px;text-align:left}
+
+/* ---- 我的 / 账号 ---- */
+.profile-card{text-align:center;padding:26px 16px}
+.profile-avatar{width:64px;height:64px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;margin:0 auto 12px}
+.profile-email{font-size:15px;font-weight:700}
+.profile-sub{font-size:12px;color:var(--text3);margin:3px 0 16px}
+.auth-msg{font-size:13px;min-height:20px;margin:4px 0 10px;color:var(--red);word-break:break-word}
+.auth-ok{color:var(--green)}
 </style>
 </head>
 <body>
@@ -419,6 +427,9 @@ a{color:var(--primary);text-decoration:none}
     <!-- AI 对话（占位） -->
     <section class="view" data-route="ai"></section>
 
+    <!-- 我的 / 账号 -->
+    <section class="view" data-route="profile"></section>
+
   </main>
 
   <!-- 底部导航 -->
@@ -428,6 +439,7 @@ a{color:var(--primary);text-decoration:none}
     <button class="nav-item" data-route="speaking"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>口语</button>
     <button class="nav-item" data-route="grammar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>语法</button>
     <button class="nav-item" data-route="stats"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4zm2 2H5V5h14v14z"/></svg>统计</button>
+    <button class="nav-item" data-route="profile"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>我的</button>
   </nav>
 
 </div>
@@ -436,8 +448,22 @@ a{color:var(--primary);text-decoration:none}
 <div id="modal-root"></div>
 <div class="toast" id="toast"></div>
 
+<!-- 云端同步（Supabase） -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
+/* ============================================================
+   账号同步（Supabase）全局状态
+   ============================================================ */
+let authUser = null;    // 当前登录用户 {id, email}
+let syncTimer = null;   // 增量同步防抖定时器
+let syncing = false;    // 全量合并进行中（防递归）
+let pushBusy = false;   // 推送进行中（防并发）
+let dirtyItems = false; // 有待推送的词条
+let lastItemSyncTs = 0; // 上次成功推送词条的时间戳
+let _lastTs = 0;        // 单调时间戳辅助
+function nowTs(){ const t = Date.now(); if(t <= _lastTs) return ++_lastTs; _lastTs = t; return t; }
+
 /* ============================================================
    图标库（内联 SVG）
    ============================================================ */
@@ -1336,7 +1362,257 @@ function mergeBuiltin(){
   persist();
 }
 if(store.contentVer < CONTENT_VER){ mergeBuiltin(); }
-function persist(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){ console.warn('persist failed', e); } }
+function persist(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){ console.warn('persist failed', e); } queueSync(); }
+
+/* ============================================================
+   账号同步（Supabase 云端）
+   ============================================================ */
+const SB_URL = 'https://tbuaapddekvjgakbopoj.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRidWFhcGRkZWt2amdha2JvcG9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MDcxMDEsImV4cCI6MjEwMzQ4MzEwMX0.DREA3zGk6m-_sLjs8tYW-TRe8cQyDWyOavJX9tUJNI8';
+const LS_AUTH_KEY = 'zhifu_auth_user_v1';
+const LS_SYNC_LOG_KEY = 'zhifu_sync_log_ts_v1';
+let sb = null;
+try{ if(window.supabase){ sb = window.supabase.createClient(SB_URL, SB_ANON); } }
+catch(e){ sb = null; console.warn('supabase init failed', e); }
+
+function logId(l){ return (l.ts||'')+'_'+(l.type||'')+'_'+(l.date||'')+'_'+(l.count||0); }
+
+/* 变更即入队：仅在有登录态时触发 */
+function queueSync(){
+  if(!authUser || !sb || syncing) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(pushIncremental, 1000);
+}
+function queueItemSync(){ dirtyItems = true; queueSync(); }
+
+async function pushIncremental(){
+  if(!authUser || !sb) return;
+  if(pushBusy){ clearTimeout(syncTimer); syncTimer = setTimeout(pushIncremental, 2000); return; }
+  pushBusy = true;
+  try{
+    if(dirtyItems){ await pushItems(); dirtyItems = false; }
+    await pushCheckins();
+    await pushLogs();
+  }catch(e){ console.warn('增量同步失败', e); }
+  finally{ pushBusy = false; }
+}
+async function pushItems(){
+  const uid = authUser.id;
+  const rows = [];
+  let maxTs = lastItemSyncTs;
+  store.words.forEach(w=>{
+    if((w._ts||0) <= lastItemSyncTs) return;
+    rows.push({user_id:uid, id:w.id, kind:'word', term:w.term, phon:w.phon||'', mean:w.mean, ex:w.ex||'', cat:w.cat||'', scene:'', prof:w.prof||0, due:w.due||'', src:w.src||'', updated_at:w._ts||0});
+    if((w._ts||0) > maxTs) maxTs = w._ts;
+  });
+  store.phrases.forEach(p=>{
+    if((p._ts||0) <= lastItemSyncTs) return;
+    rows.push({user_id:uid, id:p.id, kind:'phrase', term:p.term, phon:'', mean:p.mean, ex:p.ex||'', cat:'', scene:p.scene||'', prof:p.prof||0, due:p.due||'', src:p.src||'', updated_at:p._ts||0});
+    if((p._ts||0) > maxTs) maxTs = p._ts;
+  });
+  if(!rows.length) return;
+  for(let i=0;i<rows.length;i+=400){
+    const {error} = await sb.from('items').upsert(rows.slice(i,i+400), {onConflict:'user_id,id'});
+    if(error) throw error;
+  }
+  lastItemSyncTs = maxTs;
+}
+async function pushCheckins(){
+  const uid = authUser.id;
+  const rows = Object.keys(store.checkins).map(k=>({user_id:uid, date:k, sec:store.checkins[k].sec||0, acts:store.checkins[k].acts||0}));
+  if(!rows.length) return;
+  for(let i=0;i<rows.length;i+=400){
+    const {error} = await sb.from('checkins').upsert(rows.slice(i,i+400), {onConflict:'user_id,date'});
+    if(error) throw error;
+  }
+}
+async function pushLogs(){
+  const uid = authUser.id;
+  const lastTs = parseInt(localStorage.getItem(LS_SYNC_LOG_KEY)||'0', 10) || 0;
+  const fresh = store.logs.filter(l=>(l.ts||0) > lastTs);
+  if(!fresh.length) return;
+  const rows = fresh.map(l=>({user_id:uid, id:logId(l), date:l.date||'', type:l.type||'', count:l.count||1, ts:l.ts||0}));
+  for(let i=0;i<rows.length;i+=400){
+    const {error} = await sb.from('logs').upsert(rows.slice(i,i+400), {onConflict:'user_id,id'});
+    if(error) throw error;
+  }
+  const maxTs = Math.max.apply(null, fresh.map(l=>l.ts||0));
+  localStorage.setItem(LS_SYNC_LOG_KEY, String(maxTs));
+}
+
+async function pullAll(){
+  const out = {items:[], checkins:[], logs:[]};
+  const a = await sb.from('items').select('*');
+  if(a.error) throw a.error; out.items = a.data||[];
+  const b = await sb.from('checkins').select('*');
+  if(b.error) throw b.error; out.checkins = b.data||[];
+  const c = await sb.from('logs').select('*').order('ts',{ascending:true}).limit(2000);
+  if(c.error) throw c.error; out.logs = c.data||[];
+  return out;
+}
+
+/* 把云端数据合并进本机（同一词条按 updated_at 较新者胜；打卡取并集） */
+function mergeCloud(cloud){
+  const byId = {};
+  store.words.forEach(w=>byId[w.id] = {kind:'word', item:w});
+  store.phrases.forEach(p=>byId[p.id] = {kind:'phrase', item:p});
+  cloud.items.forEach(c=>{
+    const ex = byId[c.id];
+    const cts = c.updated_at||0;
+    if(!ex){
+      if(c.kind==='word'){ store.words.push({id:c.id, term:c.term, phon:c.phon||'', mean:c.mean, ex:c.ex||'', cat:c.cat||'daily', prof:c.prof||0, due:c.due||'', src:c.src||'cloud', _ts:cts}); }
+      else{ store.phrases.push({id:c.id, term:c.term, mean:c.mean, scene:c.scene||'daily', ex:c.ex||'', prof:c.prof||0, due:c.due||'', src:c.src||'cloud', _ts:cts}); }
+      return;
+    }
+    const lts = ex.item._ts||0;
+    if(cts > lts){
+      const t = ex.item;
+      t.term=c.term; t.phon=c.phon||''; t.mean=c.mean; t.ex=c.ex||''; t.prof=c.prof||0; t.due=c.due||''; t.src=c.src||t.src; t._ts=cts;
+      if(ex.kind==='word') t.cat=c.cat||t.cat; else t.scene=c.scene||t.scene;
+    }
+  });
+  cloud.checkins.forEach(c=>{
+    const l = store.checkins[c.date];
+    if(!l){ store.checkins[c.date] = {sec:c.sec||0, acts:c.acts||0}; }
+    else { l.sec = Math.max(l.sec||0, c.sec||0); l.acts = Math.max(l.acts||0, c.acts||0); }
+  });
+  const have = new Set(store.logs.map(l=>logId(l)));
+  cloud.logs.forEach(c=>{ if(!have.has(c.id)){ store.logs.push({date:c.date, type:c.type, count:c.count, ts:c.ts}); } });
+  if(store.logs.length>3000) store.logs = store.logs.slice(-3000);
+}
+
+/* 登录 / 启动时全量合并：先拉云端 → 合并 → 推送本机 */
+async function syncMerge(){
+  if(!authUser || !sb || syncing) return;
+  syncing = true;
+  try{
+    const cloud = await pullAll();
+    mergeCloud(cloud);
+    persist();
+    lastItemSyncTs = 0;
+    dirtyItems = true;
+    await pushIncremental();
+  }catch(e){ console.warn('全量同步失败', e); }
+  finally{ syncing = false; }
+}
+
+
+/* ---- 账号 UI ---- */
+function authMsg(txt, ok){
+  const m = document.getElementById('pf-msg');
+  if(m){ m.textContent = txt; m.className = 'auth-msg' + (ok?' auth-ok':''); }
+}
+function pfEmail(){ const i=document.getElementById('pf-email'); return i? i.value.trim():''; }
+function pfPass(){ const i=document.getElementById('pf-pass'); return i? i.value:''; }
+function sbErr(e){
+  const m = (e && e.message) || '';
+  if(/already registered|already been registered/i.test(m)) return '该邮箱已注册，请直接登录';
+  if(/invalid login credentials/i.test(m)) return '邮箱或密码错误';
+  if(/email.*not.*valid|invalid email/i.test(m)) return '邮箱格式不正确';
+  if(/password.*weak|at least 6/i.test(m)) return '密码强度不足（至少 6 位）';
+  if(/rate limit/i.test(m)) return '操作过于频繁，请稍后再试';
+  return m ? String(m).slice(0,80) : '操作失败，请重试';
+}
+async function pfSignup(){
+  if(!sb){ toast('云端服务暂不可用'); return; }
+  const email = pfEmail(), pass = pfPass();
+  if(!email){ authMsg('请填写邮箱'); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ authMsg('邮箱格式不正确'); return; }
+  if(pass.length<6){ authMsg('密码至少 6 位'); return; }
+  authMsg('注册中…');
+  try{
+    const {data, error} = await sb.auth.signUp({email, password:pass});
+    if(error){ authMsg(sbErr(error)); return; }
+    if(data && data.session){ await afterAuth(data.session.user); }
+    else{ authMsg('注册成功！请到邮箱点击确认链接后登录'); }
+  }catch(e){ authMsg('网络异常，请重试'); }
+}
+async function pfLogin(){
+  if(!sb){ toast('云端服务暂不可用'); return; }
+  const email = pfEmail(), pass = pfPass();
+  if(!email || !pass){ authMsg('请填写邮箱和密码'); return; }
+  authMsg('登录中…');
+  try{
+    const {data, error} = await sb.auth.signInWithPassword({email, password:pass});
+    if(error){ authMsg(sbErr(error)); return; }
+    if(data.session){ await afterAuth(data.session.user); }
+  }catch(e){ authMsg('网络异常，请重试'); }
+}
+async function afterAuth(user){
+  authUser = user;
+  try{ localStorage.setItem(LS_AUTH_KEY, JSON.stringify({id:user.id, email:user.email})); }catch(e){}
+  toast('登录成功，正在同步数据…');
+  try{ await syncMerge(); }catch(e){}
+  render();
+  toast('登录成功，数据已同步');
+}
+async function pfLogout(){
+  try{ if(sb) await sb.auth.signOut(); }catch(e){}
+  authUser = null;
+  try{ localStorage.removeItem(LS_AUTH_KEY); }catch(e){}
+  render(); toast('已退出登录');
+}
+async function pfSync(){
+  if(!authUser || !sb){ toast('请先登录'); return; }
+  toast('正在同步…');
+  try{ await syncMerge(); toast('同步完成'); }
+  catch(e){ toast('同步失败，请检查网络'); }
+}
+
+function renderProfile(){
+  const el = document.querySelector('[data-route="profile"]');
+  if(!sb){
+    el.innerHTML = `
+      <div class="section-title"><h2>我的 · 账号</h2></div>
+      <div class="card">
+        <div style="font-size:15px;font-weight:700">云端同步暂不可用</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-top:6px">当前无法连接云服务（可能是网络或脚本加载问题），学习数据仍保存在本机，不影响使用。</div>
+      </div>`;
+    return;
+  }
+  if(!authUser){
+    el.innerHTML = `
+      <div class="section-title"><h2>我的 · 账号</h2></div>
+      <div class="card">
+        <div style="font-size:15px;font-weight:700">登录后云端同步</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7;margin:6px 0 16px">换手机、换设备登录同一账号，词汇、熟练度、打卡记录自动同步；每个账号数据相互独立，互不影响。</div>
+        <div class="field"><label>邮箱</label><input id="pf-email" type="email" placeholder="you@example.com" autocomplete="email"></div>
+        <div class="field"><label>密码</label><input id="pf-pass" type="password" placeholder="至少 6 位" autocomplete="new-password"></div>
+        <div id="pf-msg" class="auth-msg"></div>
+        <button class="btn btn-primary btn-block" onclick="pfLogin()">登 录</button>
+        <button class="btn btn-tonal btn-block mt12" onclick="pfSignup()">注册新账号</button>
+      </div>
+      <div class="ai-note" style="margin-top:12px">提示：未登录时，学习数据只保存在当前手机浏览器里；登录后会自动把本机数据合并进账号并云端同步。</div>
+    `;
+    return;
+  }
+  const email = authUser.email || '';
+  el.innerHTML = `
+    <div class="section-title"><h2>我的 · 账号</h2></div>
+    <div class="card profile-card">
+      <div class="profile-avatar">${esc((email[0]||'U').toUpperCase())}</div>
+      <div class="profile-email">${esc(email)}</div>
+      <div class="profile-sub">已登录 · 学习数据云端自动同步</div>
+      <div class="actions-bar">
+        <button class="btn btn-primary" onclick="pfSync()">立即同步</button>
+        <button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="pfLogout()">退出登录</button>
+      </div>
+    </div>
+    <div class="ai-note" style="margin-top:12px">学习记录在本机与云端双向同步；离线时照常学习，联网后自动补同步。不同账号之间数据完全隔离。</div>
+  `;
+}
+
+async function initAuth(){
+  if(!sb) return;
+  try{
+    const {data} = await sb.auth.getSession();
+    if(data && data.session){
+      authUser = data.session.user;
+      await syncMerge();
+      render();
+    }
+  }catch(e){ console.warn('auth init failed', e); }
+}
 
 const catName = k => { const c = CATS.find(x=>x.key===k); return c?c.name:k; };
 const sceneName = k => { const c = SCENES.find(x=>x.key===k); return c?c.name:k; };
@@ -1378,7 +1654,7 @@ function speak(text, rate){
 /* ============================================================
    路由
    ============================================================ */
-const ROUTES = ['home','flashcards','words','speaking','grammar','stats','ai'];
+const ROUTES = ['home','flashcards','words','speaking','grammar','stats','ai','profile'];
 function parseHash(){
   const h = location.hash.replace(/^#\/?/,'') || 'home';
   return h.split('?')[0];
@@ -1569,9 +1845,15 @@ function markCard(level){
   const dayMap  = {again:0, hard:1, good:3, easy:7};
   w.prof = Math.max(0, Math.min(4, w.prof + profMap[level]));
   w.due = dayKeyOf(addDays(dayMap[level]));
+  w._ts = nowTs();
+  // 写回词库，确保熟练度与复习日期持久化（deck 是副本，需同步回 store）
+  const srcArr = w.kind==='phrase' ? store.phrases : store.words;
+  const orig = srcArr.find(x=>x.id===w.id);
+  if(orig){ orig.prof = w.prof; orig.due = w.due; orig._ts = w._ts; }
   if(level==='again' && !w._req){ w._req = true; deck.push(w); }
   sessionStats[level]++;
   logActivity('flash', 1);
+  queueItemSync();
   deckIdx++;
   if(deckIdx >= deck.length){
     const wrap = document.querySelector('[data-route="flashcards"] .flash-wrap');
@@ -1695,13 +1977,13 @@ function saveQuickAdd(){
     const phon = document.getElementById('qa-phon').value.trim();
     const cat = document.getElementById('qa-cat').value;
     if(store.words.some(w=>w.term.toLowerCase()===term.toLowerCase())){ toast('该单词已存在'); return; }
-    store.words.push({id:'uw'+Date.now(), term, phon, mean, ex, cat, prof:0, due:'', src:'user'});
+    store.words.push({id:'uw'+Date.now(), term, phon, mean, ex, cat, prof:0, due:'', src:'user', _ts:nowTs()});
   } else {
     const scene = document.getElementById('qa-scene').value;
     if(store.phrases.some(p=>p.term.toLowerCase()===term.toLowerCase())){ toast('该短语已存在'); return; }
-    store.phrases.push({id:'up'+Date.now(), term, mean, scene, ex, prof:0, due:'', src:'user'});
+    store.phrases.push({id:'up'+Date.now(), term, mean, scene, ex, prof:0, due:'', src:'user', _ts:nowTs()});
   }
-  persist(); logActivity('add', 1); closeModal(); toast('已添加：'+term); render();
+  persist(); logActivity('add', 1); queueItemSync(); closeModal(); toast('已添加：'+term); render();
 }
 function saveAddWord(){
   const term = document.getElementById('aw-term').value.trim();
@@ -1711,8 +1993,8 @@ function saveAddWord(){
   const ex = document.getElementById('aw-ex').value.trim();
   const cat = document.getElementById('aw-cat').value;
   if(store.words.some(w=>w.term.toLowerCase()===term.toLowerCase())){ toast('该单词已存在'); return; }
-  store.words.push({id:'uw'+Date.now(), term, phon, mean, ex, cat, prof:0, due:'', src:'user'});
-  persist(); logActivity('add', 1); closeModal(); toast('已添加：'+term); render();
+  store.words.push({id:'uw'+Date.now(), term, phon, mean, ex, cat, prof:0, due:'', src:'user', _ts:nowTs()});
+  persist(); logActivity('add', 1); queueItemSync(); closeModal(); toast('已添加：'+term); render();
 }
 function openWordDetail(id){
   const w = store.words.find(x=>x.id===id);
@@ -1753,11 +2035,16 @@ function saveEditWord(id){
   w.mean = document.getElementById('ew-mean').value.trim() || w.mean;
   w.ex = document.getElementById('ew-ex').value.trim();
   w.cat = document.getElementById('ew-cat').value;
+  w._ts = nowTs();
   persist(); closeModal(); toast('已保存'); render();
+  queueItemSync();
 }
-function delWord(id){
+async function delWord(id){
   const i = store.words.findIndex(x=>x.id===id);
-  if(i>-1){ store.words.splice(i,1); persist(); closeModal(); toast('已删除'); render(); }
+  if(i>-1){
+    store.words.splice(i,1); persist(); closeModal(); toast('已删除'); render();
+    if(authUser && sb){ try{ await sb.from('items').delete().eq('id', id); }catch(e){} }
+  }
 }
 
 function openImport(){
@@ -1791,6 +2078,7 @@ function doImport(){
   const res = parseImport(text);
   const box = document.getElementById('imp-result');
   if(res.added>0) logActivity('import', res.added);
+  if(res.added>0) queueItemSync();
   box.innerHTML = `<div style="font-size:14px;line-height:1.8;color:var(--text2)">
     成功导入 <b style="color:var(--green)">${res.added}</b> 条；跳过重复 <b>${res.skip}</b> 条；无效行 <b>${res.bad}</b> 条。</div>`;
   renderWords();
@@ -1809,7 +2097,7 @@ function parseImport(text){
     if(parts.length===2){ mean = parts[1]; }
     else if(parts.length===3){ phon = parts[1]; mean = parts[2]; }
     else { phon = parts[1]; mean = parts[2]; ex = parts.slice(3).join(' '); }
-    store.words.push({id:'uw'+Date.now()+added, term, phon, mean, ex, cat:'daily', prof:0, due:'', src:'import'});
+    store.words.push({id:'uw'+Date.now()+added, term, phon, mean, ex, cat:'daily', prof:0, due:'', src:'import', _ts:nowTs()+added});
     added++;
   }
   persist();
@@ -1864,8 +2152,10 @@ function setPhraseProf(id, l){
   const p = store.phrases.find(x=>x.id===id);
   if(!p) return;
   p.prof = l;
+  p._ts = nowTs();
   if(l>0) logActivity('speak', 1);
   persist();
+  queueItemSync();
   // 更新按钮
   const row = document.getElementById('pr-'+id);
   if(row){ Array.from(row.children).forEach((b,i)=>b.classList.toggle('on', i===l)); }
@@ -2303,11 +2593,11 @@ function topSub(text){ document.getElementById('top-sub').textContent = text; }
    ============================================================ */
 const RENDER = {
   home: renderHome, flashcards: renderFlashcards, words: renderWords,
-  speaking: renderSpeaking, grammar: renderGrammar, stats: renderStats, ai: renderAI
+  speaking: renderSpeaking, grammar: renderGrammar, stats: renderStats, ai: renderAI, profile: renderProfile
 };
 const SUBTITLE = {
   home:'职场英语学习', flashcards:'闪卡 · 词汇记忆', words:'词库管理',
-  speaking:'口语 · 高频表达', grammar:'语法查漏', stats:'学习统计', ai:'AI 自由对话'
+  speaking:'口语 · 高频表达', grammar:'语法查漏', stats:'学习统计', ai:'AI 自由对话', profile:'我的 · 账号'
 };
 function render(){
   const route = parseHash();
@@ -2333,6 +2623,7 @@ window.addEventListener('hashchange', render);
 document.addEventListener('visibilitychange', ()=>{ lastActive = Date.now(); });
 
 render();
+initAuth();
 </script>
 </body>
 </html>
