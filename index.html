@@ -229,6 +229,24 @@ a{color:var(--primary);text-decoration:none}
   border-radius:999px;border:1px solid var(--line);color:var(--text2);background:#fff;
 }
 .prof-seg.on{background:var(--primary);border-color:var(--primary);color:#fff}
+/* ---- 口语：发音与听力 ---- */
+.p-acts{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.p-acts .btn-sm{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;color:var(--text2);border-radius:999px;padding:7px 13px;font-weight:500}
+.p-acts .btn-sm svg{width:15px;height:15px;flex:none}
+.p-acts .btn-sm:active{background:var(--primary-soft)}
+.recite-btn{color:var(--primary)!important}
+.recite-btn.on{background:var(--primary)!important;border-color:var(--primary)!important;color:#fff!important}
+.hidden-en{filter:blur(6px);user-select:none;-webkit-user-select:none;pointer-events:none}
+.hidden-en.show{filter:none;pointer-events:auto}
+.score-badge{flex:none;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--text2);white-space:nowrap}
+.score-badge.s-g{background:var(--green-soft);color:var(--green);border-color:transparent}
+.score-badge.s-o{background:var(--amber-soft);color:var(--amber);border-color:transparent}
+.score-badge.s-r{background:var(--red-soft);color:var(--red);border-color:transparent}
+.rec-feedback{margin-top:10px;background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;line-height:1.7;color:var(--text2)}
+.rec-feedback .rec-score{font-size:20px;font-weight:700}
+.rec-feedback .rec-want,.rec-feedback .rec-heard{font-size:13px;margin-top:3px}
+.rec-feedback .rec-tip{margin-top:6px;font-size:13px}
+.rec-hint{font-size:13px;color:var(--primary)}
 .ai-card{
   border:1px dashed var(--primary);background:var(--primary-soft);
   border-radius:var(--radius);padding:16px;display:flex;align-items:center;gap:14px;
@@ -1659,12 +1677,121 @@ function todayActivity(){ const c = store.checkins[todayKey()]; return c ? c.act
 /* ============================================================
    发音（TTS）
    ============================================================ */
+let _ttsVoice = null, _ttsVoiceLoaded = false;
+function pickVoice(){
+  if(!('speechSynthesis' in window)) return null;
+  if(_ttsVoiceLoaded) return _ttsVoice;
+  _ttsVoiceLoaded = true;
+  let vs = [];
+  try{ vs = speechSynthesis.getVoices() || []; }catch(e){ vs = []; }
+  if(!vs.length) return null;
+  // 优先自然美音，其次英音，最后任选英文语音
+  const pref = ['Google US English','Microsoft Aria Online (Natural) - English (United States)','Microsoft Aria','Microsoft Jenny','Samantha','Microsoft Zira','Daniel'];
+  for(let i=0;i<pref.length;i++){
+    const hit = vs.find(v=>v.name===pref[i]);
+    if(hit){ _ttsVoice = hit; return hit; }
+  }
+  const us = vs.find(v=>v.lang && v.lang.toLowerCase().indexOf('en-us')===0);
+  if(us){ _ttsVoice = us; return us; }
+  const en = vs.find(v=>v.lang && v.lang.toLowerCase().indexOf('en')===0);
+  _ttsVoice = en || vs[0] || null;
+  return _ttsVoice;
+}
+if('speechSynthesis' in window){
+  speechSynthesis.onvoiceschanged = function(){ _ttsVoiceLoaded = false; };
+}
 function speak(text, rate){
   if(!('speechSynthesis' in window)){ toast('当前浏览器不支持发音'); return; }
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US'; u.rate = rate || 0.92; u.pitch = 1;
+  const v = pickVoice();
+  if(v){ u.voice = v; u.lang = v.lang || 'en-US'; } else { u.lang = 'en-US'; }
+  u.rate = rate || 0.92; u.pitch = 1;
   speechSynthesis.speak(u);
+}
+function speakStop(){ if('speechSynthesis' in window){ speechSynthesis.cancel(); } }
+
+/* ============================================================
+   跟读评分 + 听力练习
+   ============================================================ */
+function normPhrase(s){
+  return String(s||'').toLowerCase().replace(/[^a-z0-9\s']/g,' ').replace(/\s+/g,' ').trim();
+}
+function wordSim(a, b){
+  const A = normPhrase(a).split(' ').filter(Boolean);
+  const B = normPhrase(b).split(' ').filter(Boolean);
+  if(!A.length || !B.length) return 0;
+  const n = A.length, m = B.length;
+  const dp = [];
+  for(let i=0;i<=n;i++){ dp.push(new Array(m+1).fill(0)); dp[i][0] = i; }
+  for(let j=0;j<=m;j++){ dp[0][j] = j; }
+  for(let i=1;i<=n;i++){
+    for(let j=1;j<=m;j++){
+      const cost = A[i-1]===B[j-1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
+    }
+  }
+  return Math.max(0, 1 - dp[n][m]/Math.max(n, m));
+}
+let recActive = null;
+function reciteSupported(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+function startRecite(id){
+  const p = store.phrases.find(x=>x.id===id);
+  if(!p) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast('当前浏览器不支持语音识别，可自己跟读后标记熟练度'); return; }
+  if(recActive && recActive._id===id){ stopRecite(); return; }
+  if(recActive) stopRecite();
+  speakStop();
+  const rec = new SR();
+  rec.lang = 'en-US'; rec.interimResults = false; rec.maxAlternatives = 1;
+  recActive = rec; recActive._id = id;
+  const btn = document.getElementById('rec-'+id);
+  if(btn){ btn.classList.add('on'); btn.innerHTML = IC.mic+'<span>聆听中…</span>'; }
+  const box = document.getElementById('recf-'+id);
+  if(box){ box.style.display = 'block'; box.innerHTML = '<div class="rec-hint">请大声朗读：'+esc(p.term)+'</div>'; }
+  rec.onresult = function(e){
+    let heard = '';
+    try{ heard = (e.results[0][0].transcript||'').trim(); }catch(err){ heard = ''; }
+    const sim = wordSim(heard, p.term);
+    const score = Math.round(sim*100);
+    p.score = score; p._ts = nowTs();
+    persist(); queueItemSync();
+    if(score>=60) logActivity('speak', 1);
+    const badge = document.getElementById('recscore-'+id);
+    if(badge){ badge.textContent = score+'分'; badge.className = 'score-badge '+(score>=85?'s-g':score>=60?'s-o':'s-r'); }
+    if(box){
+      const color = score>=85?'var(--green)':score>=60?'var(--amber)':'var(--red)';
+      const tip = score>=85?'发音很棒，继续保持！':score>=60?'不错，再多练几遍会更地道':'先点慢速多听几遍，再跟读一次';
+      box.innerHTML =
+        '<div class="rec-score" style="color:'+color+'">'+score+' 分</div>'+
+        '<div class="rec-want">目标：'+esc(p.term)+'</div>'+
+        '<div class="rec-heard">听到：'+esc(heard||'(没听清)')+'</div>'+
+        '<div class="rec-tip">'+tip+'</div>';
+    }
+  };
+  rec.onerror = function(e){
+    const msg = (e.error==='not-allowed'||e.error==='service-not-allowed')
+      ? '请允许麦克风权限后再试'
+      : (e.error==='no-speech' ? '没听清，请靠近麦克风再试一次' : '语音识别出错，请重试');
+    toast(msg);
+    if(box){ box.style.display = 'block'; box.innerHTML = '<div class="rec-hint" style="color:var(--red)">'+msg+'</div>'; }
+  };
+  rec.onend = function(){
+    if(recActive === rec) recActive = null;
+    if(btn){ btn.classList.remove('on'); btn.innerHTML = IC.mic+'<span>跟读</span>'; }
+  };
+  try{ rec.start(); }catch(err){ toast('无法启动语音识别'); }
+}
+function stopRecite(){
+  if(recActive){ try{ recActive.abort(); }catch(e){} recActive = null; }
+  document.querySelectorAll('.recite-btn.on').forEach(function(b){
+    b.classList.remove('on'); b.innerHTML = IC.mic+'<span>跟读</span>';
+  });
+}
+function toggleEn(id){
+  const el = document.getElementById('pe-'+id);
+  if(el){ el.classList.toggle('show'); }
 }
 
 /* ============================================================
@@ -2026,6 +2153,7 @@ function openWordDetail(id){
     <div class="field"><label>熟练度</label><div>${esc(PROF_LABEL[w.prof])}</div></div>
     <div class="actions-bar">
       <button class="btn btn-outline" data-speak="${esc(w.term)}">${IC.play}发音</button>
+      <button class="btn btn-outline" data-speak="${esc(w.term)}" data-rate="0.6">${IC.volume}慢速</button>
       <button class="btn btn-tonal" onclick="closeModal();openEditWord('${w.id}')">编辑</button>
       <button class="btn btn-outline" style="color:var(--red);border-color:var(--red)" onclick="delWord('${w.id}')">删除</button>
     </div>
@@ -2127,6 +2255,9 @@ function parseImport(text){
    渲染：口语
    ============================================================ */
 let phraseScene = 'all';
+let listeningMode = false;
+try{ listeningMode = !!localStorage.getItem('zhifu_listen_v1'); }catch(e){}
+function setListenMode(v){ listeningMode = !!v; try{ localStorage.setItem('zhifu_listen_v1', v?'1':'0'); }catch(e){} markDirty('speaking'); render(); }
 function renderSpeaking(){
   const el = document.querySelector('[data-route="speaking"]');
   const chips = ['all'].concat(SCENES.map(c=>c.key));
@@ -2138,7 +2269,11 @@ function renderSpeaking(){
         <div class="s">和 Mia 用英语日常闲聊，练开口、即时纠错、AI 朗读</div>
       </div>
     </div>
-    <div class="section-title"><h2>跟读模仿</h2><span style="font-size:12px;color:var(--text3)">听原音 → 跟读 → 标记熟练度</span></div>
+    <div class="section-title"><h2>口语训练</h2><span style="font-size:12px;color:var(--text3)">${listeningMode?'听原音 → 试复述 → 显示答案':'听原音 → 跟读评分 → 标记熟练度'}</span></div>
+    <div class="chips">
+      <button class="chip ${!listeningMode?'on':''}" onclick="setListenMode(false)">跟读模式</button>
+      <button class="chip ${listeningMode?'on':''}" onclick="setListenMode(true)">听力练习</button>
+    </div>
     <div class="chips">
       ${chips.map(k=>`<button class="chip ${phraseScene===k?'on':''}" onclick="setScene('${k}')">${k==='all'?'全部':esc(sceneName(k))}</button>`).join('')}
     </div>
@@ -2152,20 +2287,39 @@ function renderPhraseList(){
   const box = document.getElementById('p-list');
   if(!box) return;
   if(!list.length){ box.innerHTML = '<div class="empty-state"><div class="t">暂无表达</div></div>'; return; }
-  box.innerHTML = list.map(p=>`
+  box.innerHTML = list.map(p=>{
+    const enCls = listeningMode ? 'p-en hidden-en' : 'p-en';
+    const badge = (p.score!=null)
+      ? `<span class="score-badge ${p.score>=85?'s-g':p.score>=60?'s-o':'s-r'}" id="recscore-${p.id}">${p.score}分</span>`
+      : '';
+    const acts = listeningMode
+      ? `<div class="p-acts">
+          <button class="btn-sm" data-speak="${esc(p.term)}" data-rate="0.9">${IC.play}原音</button>
+          <button class="btn-sm" data-speak="${esc(p.term)}" data-rate="0.6">${IC.volume}慢速</button>
+          <button class="btn-sm btn-outline" onclick="toggleEn('${p.id}')">显示答案</button>
+        </div>`
+      : `<div class="p-acts">
+          <button class="btn-sm" data-speak="${esc(p.term)}" data-rate="0.9">${IC.play}原音</button>
+          <button class="btn-sm" data-speak="${esc(p.term)}" data-rate="0.6">${IC.volume}慢速</button>
+          <button class="btn-sm recite-btn" id="rec-${p.id}" onclick="startRecite('${p.id}')">${IC.mic}跟读</button>
+        </div>`;
+    return `
     <div class="card phrase-card">
       <div class="p-top">
         <div style="flex:1">
-          <div class="p-en">${esc(p.term)}</div>
+          <div id="pe-${p.id}" class="${enCls}">${esc(p.term)}</div>
           <div class="p-cn">${esc(p.mean)}</div>
         </div>
-        <button class="btn-icon" data-speak="${esc(p.term)}" data-rate="0.9">${IC.play}</button>
+        ${badge}
       </div>
       ${p.ex?'<div class="p-ex">'+esc(p.ex)+'</div>':''}
+      <div class="rec-feedback" id="recf-${p.id}" style="display:none"></div>
+      ${acts}
       <div class="prof-row" id="pr-${p.id}">
         ${[0,1,2,3,4].map(l=>`<button class="prof-seg ${p.prof===l?'on':''}" onclick="setPhraseProf('${p.id}',${l})">${PROF_LABEL[l]}</button>`).join('')}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 function setPhraseProf(id, l){
   const p = store.phrases.find(x=>x.id===id);
