@@ -1409,6 +1409,15 @@ const SB_URL = 'https://tbuaapddekvjgakbopoj.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRidWFhcGRkZWt2amdha2JvcG9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MDcxMDEsImV4cCI6MjEwMzQ4MzEwMX0.DREA3zGk6m-_sLjs8tYW-TRe8cQyDWyOavJX9tUJNI8';
 const LS_AUTH_KEY = 'zhifu_auth_user_v1';
 const LS_SYNC_LOG_KEY = 'zhifu_sync_log_ts_v1';
+// 兼容旧版「双重 #」重置链接：#profile#access_token=... → #access_token=...
+// 必须在 Supabase 初始化前归一化，否则 access_token 无法被解析
+try{
+  const _rh = location.hash;
+  if(_rh && _rh.indexOf('type=recovery') !== -1 && _rh.indexOf('#access_token=') > 1){
+    const _clean = _rh.substring(_rh.indexOf('#access_token='));
+    history.replaceState(null, '', location.pathname + location.search + _clean);
+  }
+}catch(e){}
 let sb = null;
 try{ if(window.supabase){ sb = window.supabase.createClient(SB_URL, SB_ANON); } }
 catch(e){ sb = null; console.warn('supabase init failed', e); }
@@ -1597,11 +1606,12 @@ async function pfLogout(){
 /* ---- 忘记密码 / 设置新密码 ---- */
 let recoveryMode = false;
 function resetRedirect(){
-  // 网页/PWA 回跳本应用；APK（https://localhost）则回跳网页版完成重置
+  // 回跳地址不带 hash：Supabase 会在其后追加 #access_token=...&type=recovery，
+  // 若自带 hash 会形成双重 # 导致令牌无法解析。网页回本应用，APK 回网页版完成重置。
   if(location.origin && location.origin.indexOf('github.io') !== -1){
-    return location.origin + location.pathname + '#profile';
+    return location.origin + location.pathname;
   }
-  return 'https://binwillgetrich-ctrl.github.io/zhiying-english/index.html#profile';
+  return 'https://binwillgetrich-ctrl.github.io/zhiying-english/index.html';
 }
 async function pfForgot(){
   if(!sb){ toast('云端服务暂不可用'); return; }
@@ -1935,6 +1945,8 @@ function toggleEn(id){
 const ROUTES = ['home','flashcards','words','speaking','grammar','stats','ai','profile'];
 function parseHash(){
   const h = location.hash.replace(/^#\/?/,'') || 'home';
+  // 密码重置回跳：URL 带 type=recovery 时令牌参数不算路由，统一进入「我的」显示设置新密码
+  if(location.hash.indexOf('type=recovery') !== -1) return 'profile';
   return h.split('?')[0];
 }
 function go(route){ if(location.hash === '#'+route){ render(); } else { location.hash = route; } }
