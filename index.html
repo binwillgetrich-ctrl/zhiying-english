@@ -410,6 +410,10 @@ a{color:var(--primary);text-decoration:none}
 .profile-sub{font-size:12px;color:var(--text3);margin:3px 0 16px}
 .auth-msg{font-size:13px;min-height:20px;margin:4px 0 10px;color:var(--red);word-break:break-word}
 .auth-ok{color:var(--green)}
+/* 发音加载进度条（Google 风格顶部指示条） */
+#speak-progress{ position:fixed; top:0; left:0; right:0; height:3px; z-index:9999; display:none; overflow:hidden; background:rgba(26,115,232,.15); }
+#speak-progress::before{ content:''; position:absolute; top:0; left:0; height:100%; width:35%; background:#1a73e8; border-radius:3px; animation:speakProgress 1.1s ease-in-out infinite; }
+@keyframes speakProgress{ 0%{ left:-35%; } 100%{ left:100%; } }
 </style>
 </head>
 <body>
@@ -1759,7 +1763,21 @@ function pickVoice(){
 if('speechSynthesis' in window){
   speechSynthesis.onvoiceschanged = function(){ _ttsVoiceLoaded = false; };
 }
+function showSpeakLoading(){
+  let el = document.getElementById('speak-progress');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'speak-progress';
+    document.body.appendChild(el);
+  }
+  el.style.display = 'block';
+}
+function hideSpeakLoading(){
+  const el = document.getElementById('speak-progress');
+  if(el) el.style.display = 'none';
+}
 function speak(text, rate){
+  showSpeakLoading();
   const r = rate || 0.92;
   const v = ('speechSynthesis' in window) ? pickVoice() : null;
   if(v && v.name){
@@ -1769,9 +1787,9 @@ function speak(text, rate){
     u.voice = v; u.lang = v.lang || 'en-US';
     u.rate = r; u.pitch = 1;
     let started = false, timedOut = false;
-    u.onstart = function(){ started = true; };
+    u.onstart = function(){ started = true; hideSpeakLoading(); };
     u.onerror = function(){ if(!started && !timedOut){ timedOut = true; speechSynthesis.cancel(); speakOnline(text, r); } };
-    speechSynthesis.speak(u);
+    try{ speechSynthesis.speak(u); }catch(e){ try{ speechSynthesis.cancel(); }catch(e2){} speakOnline(text, r); return; }
     // 静默失败兜底：700ms 未出声则回退在线发音
     setTimeout(function(){
       if(!started && !timedOut){ timedOut = true; try{ speechSynthesis.cancel(); }catch(e){} speakOnline(text, r); }
@@ -1792,7 +1810,7 @@ function speakOnline(text, rate){
   ];
   let idx = 0;
   function playNext(){
-    if(idx >= urls.length){ toast('发音失败，请检查网络后重试'); return; }
+    if(idx >= urls.length){ hideSpeakLoading(); toast('发音失败，请检查网络后重试'); return; }
     const url = urls[idx++];
     const a = new Audio();
     a.src = url;
@@ -1801,16 +1819,17 @@ function speakOnline(text, rate){
     function next(){
       if(settled) return; settled = true;
       try{ a.pause(); a.src=''; }catch(e){}
-      if(idx < urls.length){ playNext(); } else { toast('发音失败，请检查网络后重试'); }
+      if(idx < urls.length){ playNext(); } else { hideSpeakLoading(); toast('发音失败，请检查网络后重试'); }
     }
     a.onerror = next;
     const to = setTimeout(next, 7000);
-    a.play().then(function(){ clearTimeout(to); if(!settled) settled = true; }).catch(next);
+    a.play().then(function(){ clearTimeout(to); if(!settled) settled = true; hideSpeakLoading(); }).catch(next);
     _audioTTS = a;
   }
   playNext();
 }
 function speakStop(){
+  hideSpeakLoading();
   if('speechSynthesis' in window){ try{ speechSynthesis.cancel(); }catch(e){} }
   if(_audioTTS){ try{ _audioTTS.pause(); _audioTTS = null; }catch(e){} }
 }
