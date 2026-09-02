@@ -420,7 +420,6 @@ a{color:var(--primary);text-decoration:none}
       <span class="logo">L</span>
       <span>
         <div>L</div>
-        <div class="sub" id="top-sub">职场英语学习</div>
       </span>
     </div>
     <div id="top-actions"></div>
@@ -1782,12 +1781,31 @@ function speak(text, rate){
 let _audioTTS = null;
 function speakOnline(text, rate){
   if(_audioTTS){ try{ _audioTTS.pause(); }catch(e){} _audioTTS = null; }
-  // Google TTS 在线发音：无需系统语音包，任何浏览器/WebView 均可播放
-  const url = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=' + encodeURIComponent(text);
-  const a = new Audio(url);
-  try{ a.playbackRate = rate || 0.92; }catch(e){}
-  _audioTTS = a;
-  a.play().catch(function(){ toast('发音需联网（当前设备无语音包）'); });
+  // 在线发音：多源兜底（国内优先百度，其次微软语音代理，最后谷歌），无需系统语音包
+  const urls = [
+    'https://fanyi.baidu.com/gettts?lan=en&spd=3&source=web&text=' + encodeURIComponent(text),
+    'https://api.streamelements.com/kappa/v2/speech?voice=Brian&text=' + encodeURIComponent(text),
+    'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q=' + encodeURIComponent(text)
+  ];
+  let idx = 0;
+  function playNext(){
+    if(idx >= urls.length){ toast('发音失败，请检查网络后重试'); return; }
+    const url = urls[idx++];
+    const a = new Audio();
+    a.src = url;
+    try{ a.playbackRate = rate || 0.92; }catch(e){}
+    let settled = false;
+    function next(){
+      if(settled) return; settled = true;
+      try{ a.pause(); a.src=''; }catch(e){}
+      if(idx < urls.length){ playNext(); } else { toast('发音失败，请检查网络后重试'); }
+    }
+    a.onerror = next;
+    const to = setTimeout(next, 7000);
+    a.play().then(function(){ clearTimeout(to); if(!settled) settled = true; }).catch(next);
+    _audioTTS = a;
+  }
+  playNext();
 }
 function speakStop(){
   if('speechSynthesis' in window){ try{ speechSynthesis.cancel(); }catch(e){} }
@@ -1854,9 +1872,12 @@ function startRecite(id){
     }
   };
   rec.onerror = function(e){
-    const msg = (e.error==='not-allowed'||e.error==='service-not-allowed')
+    const err = (e && e.error) || '';
+    const msg = (err==='not-allowed'||err==='service-not-allowed')
       ? '请允许麦克风权限后再试'
-      : (e.error==='no-speech' ? '没听清，请靠近麦克风再试一次' : '语音识别出错，请重试');
+      : (err==='no-speech' ? '没听清，请靠近麦克风再试一次'
+      : (err==='network' ? '当前设备缺少语音识别服务，可自己跟读后标记熟练度'
+      : '当前设备不支持语音识别，可自己跟读后标记熟练度'));
     toast(msg);
     if(box){ box.style.display = 'block'; box.innerHTML = '<div class="rec-hint" style="color:var(--red)">'+msg+'</div>'; }
   };
@@ -1912,7 +1933,7 @@ function renderHome(){
   const streak = calcStreak();
   const todaySec = (store.checkins[todayKey()]||{}).sec||0;
   const hour = new Date().getHours();
-  const greet = hour<6?'夜深了':hour<12?'早上好':hour<18?'下午好':'晚上好';
+  const greet = hour<5?'夜深了':hour<11?'早上好':hour<13?'中午好':hour<18?'下午好':hour<22?'晚上好':'晚安';
   const pday = store.phrases.length ? store.phrases[Math.floor(Math.random()*store.phrases.length)] : null;
 
   const el = document.querySelector('[data-route="home"]');
@@ -2844,7 +2865,7 @@ function dotsHtml(prof, max){
   for(let i=0;i<max;i++) h += `<i class="${i<prof?'f':''}"></i>`;
   return h+'</span>';
 }
-function topSub(text){ document.getElementById('top-sub').textContent = text; }
+
 
 /* ============================================================
    总渲染
@@ -2860,7 +2881,6 @@ const SUBTITLE = {
 function render(){
   const route = parseHash();
   setRoute(route);
-  topSub(SUBTITLE[route]||'');
   if(!RENDER[route]) return;
   // 性能优化：视图 DOM 常驻页面，数据未变化时直接复用，避免每次切换全量重建
   if(_vhtml[route] && !_vdirty[route]) return;
