@@ -1753,7 +1753,7 @@ function pickVoice(){
   const us = vs.find(v=>v.lang && v.lang.toLowerCase().indexOf('en-us')===0);
   if(us){ _ttsVoice = us; return us; }
   const en = vs.find(v=>v.lang && v.lang.toLowerCase().indexOf('en')===0);
-  _ttsVoice = en || vs[0] || null;
+  _ttsVoice = en || null;
   return _ttsVoice;
 }
 if('speechSynthesis' in window){
@@ -1761,22 +1761,24 @@ if('speechSynthesis' in window){
 }
 function speak(text, rate){
   const r = rate || 0.92;
-  if('speechSynthesis' in window){
+  const v = ('speechSynthesis' in window) ? pickVoice() : null;
+  if(v && v.name){
+    // 有可用英文语音：用系统 TTS（响应最快）
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    const v = pickVoice();
-    if(v){ u.voice = v; u.lang = v.lang || 'en-US'; } else { u.lang = 'en-US'; }
+    u.voice = v; u.lang = v.lang || 'en-US';
     u.rate = r; u.pitch = 1;
     let started = false, timedOut = false;
     u.onstart = function(){ started = true; };
     u.onerror = function(){ if(!started && !timedOut){ timedOut = true; speechSynthesis.cancel(); speakOnline(text, r); } };
     speechSynthesis.speak(u);
-    // 部分设备虽有接口但无语音包（静默失败），900ms 未真正出声则回退在线发音
+    // 静默失败兜底：700ms 未出声则回退在线发音
     setTimeout(function(){
       if(!started && !timedOut){ timedOut = true; try{ speechSynthesis.cancel(); }catch(e){} speakOnline(text, r); }
-    }, 900);
+    }, 700);
     return;
   }
+  // 无可用英文语音包：直接走在线发音，不等待
   speakOnline(text, r);
 }
 let _audioTTS = null;
