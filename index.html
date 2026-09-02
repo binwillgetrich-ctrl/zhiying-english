@@ -410,10 +410,11 @@ a{color:var(--primary);text-decoration:none}
 .profile-sub{font-size:12px;color:var(--text3);margin:3px 0 16px}
 .auth-msg{font-size:13px;min-height:20px;margin:4px 0 10px;color:var(--red);word-break:break-word}
 .auth-ok{color:var(--green)}
-/* 发音加载进度条（Google 风格顶部指示条） */
-#speak-progress{ position:fixed; top:0; left:0; right:0; height:3px; z-index:9999; display:none; overflow:hidden; background:rgba(26,115,232,.15); }
-#speak-progress::before{ content:''; position:absolute; top:0; left:0; height:100%; width:35%; background:#1a73e8; border-radius:3px; animation:speakProgress 1.1s ease-in-out infinite; }
-@keyframes speakProgress{ 0%{ left:-35%; } 100%{ left:100%; } }
+/* 发音加载进度条（点击原音/慢速后按钮内显示进度条） */
+.speak-loading{ position:relative; overflow:hidden; pointer-events:none; }
+.speak-loading .bar{ position:absolute; left:6px; right:6px; top:50%; height:4px; transform:translateY(-50%); background:rgba(26,115,232,.18); border-radius:2px; overflow:hidden; }
+.speak-loading .bar i{ position:absolute; top:0; left:-40%; width:40%; height:100%; background:#1a73e8; border-radius:2px; animation:speakBtnBar 1.1s ease-in-out infinite; }
+@keyframes speakBtnBar{ 0%{ left:-40%; } 100%{ left:100%; } }
 </style>
 </head>
 <body>
@@ -1763,21 +1764,29 @@ function pickVoice(){
 if('speechSynthesis' in window){
   speechSynthesis.onvoiceschanged = function(){ _ttsVoiceLoaded = false; };
 }
-function showSpeakLoading(){
-  let el = document.getElementById('speak-progress');
-  if(!el){
-    el = document.createElement('div');
-    el.id = 'speak-progress';
-    document.body.appendChild(el);
+let _speakLoadingBtn = null;
+function setSpeakBtnLoading(btn, on){
+  if(!btn) return;
+  if(on){
+    if(btn.dataset.sbLoading) return;
+    btn.dataset.sbLoading = '1';
+    btn.dataset.sbOrig = btn.innerHTML;
+    btn.classList.add('speak-loading');
+    btn.innerHTML = '<span class="bar"><i></i></span>';
+  }else{
+    if(!btn.dataset.sbLoading) return;
+    btn.classList.remove('speak-loading');
+    btn.innerHTML = btn.dataset.sbOrig;
+    delete btn.dataset.sbLoading;
   }
-  el.style.display = 'block';
 }
 function hideSpeakLoading(){
-  const el = document.getElementById('speak-progress');
-  if(el) el.style.display = 'none';
+  if(_speakLoadingBtn){
+    try{ setSpeakBtnLoading(_speakLoadingBtn, false); }catch(e){}
+    _speakLoadingBtn = null;
+  }
 }
 function speak(text, rate){
-  showSpeakLoading();
   const r = rate || 0.92;
   const v = ('speechSynthesis' in window) ? pickVoice() : null;
   if(v && v.name){
@@ -2915,7 +2924,13 @@ document.querySelectorAll('.nav-item').forEach(b=>{
 // 全局点击：发音按钮优先，其次闪卡翻面（事件委托，避免内联引号转义问题）
 document.addEventListener('click', e=>{
   const sp = e.target.closest('[data-speak]');
-  if(sp){ speak(sp.getAttribute('data-speak'), parseFloat(sp.getAttribute('data-rate'))||0.92); return; }
+  if(sp){
+    if(_speakLoadingBtn && _speakLoadingBtn !== sp){ try{ setSpeakBtnLoading(_speakLoadingBtn, false); }catch(e){} }
+    _speakLoadingBtn = sp;
+    setSpeakBtnLoading(sp, true);
+    speak(sp.getAttribute('data-speak'), parseFloat(sp.getAttribute('data-rate'))||0.92);
+    return;
+  }
   const card = e.target.closest('.flash-card');
   if(card && document.querySelector('[data-route="flashcards"]').classList.contains('active')){
     card.classList.toggle('flipped');
